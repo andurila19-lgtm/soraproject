@@ -65,6 +65,26 @@ export function DashboardView() {
   const overbudgetExpenses = expenses.filter(e => e.variance < 0);
   const activeWorkersCount = workers.filter(w => w.status === 'Aktif di Site' || w.status === 'Workshop Cibubur').length;
 
+  // Realization HPP Category Breakdown (Dynamic & mathematically exact 100%)
+  const relevantExpenses = selectedProjectId === 'all'
+    ? expenses
+    : expenses.filter(e => e.projectId === selectedProjectId);
+
+  const totalExpActual = relevantExpenses.reduce((acc, e) => acc + e.actualAmount, 0) || 1;
+  const matExp = relevantExpenses.filter(e => e.category === 'Material').reduce((acc, e) => acc + e.actualAmount, 0);
+  const laborExp = relevantExpenses.filter(e => e.category === 'Upah Tukang').reduce((acc, e) => acc + e.actualAmount, 0);
+  const subExp = relevantExpenses.filter(e => e.category === 'Subkontraktor').reduce((acc, e) => acc + e.actualAmount, 0);
+  const ovhExp = relevantExpenses.filter(e => e.category === 'Overhead').reduce((acc, e) => acc + e.actualAmount, 0);
+
+  const matPct = Math.round((matExp / totalExpActual) * 100);
+  const laborPct = Math.round((laborExp / totalExpActual) * 100);
+  const subPct = Math.round((subExp / totalExpActual) * 100);
+  const ovhPct = Math.max(0, 100 - (matPct + laborPct + subPct));
+
+  const avgTargetMargin = filteredProjects.length > 0
+    ? (filteredProjects.reduce((acc, p) => acc + p.targetMargin, 0) / filteredProjects.length).toFixed(1)
+    : '30.0';
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -805,40 +825,40 @@ export function DashboardView() {
                 <div>
                   <div className="flex justify-between text-[#1C2434] mb-1">
                     <span className="font-medium">Material & Hardware:</span>
-                    <span className="font-mono font-bold text-[#3C50E0]">52% (Rp 480 Jt)</span>
+                    <span className="font-mono font-bold text-[#3C50E0]">{matPct}% ({formatCompactRupiah(matExp)})</span>
                   </div>
                   <div className="w-full bg-[#E2E8F0] h-2 rounded-full overflow-hidden">
-                    <div className="bg-[#3C50E0] h-full rounded-full" style={{ width: '52%' }} />
+                    <div className="bg-[#3C50E0] h-full rounded-full transition-all duration-300" style={{ width: `${matPct}%` }} />
                   </div>
                 </div>
 
                 <div>
                   <div className="flex justify-between text-[#1C2434] mb-1">
                     <span className="font-medium">Upah Tukang & Mandor:</span>
-                    <span className="font-mono font-bold text-[#10B981]">28% (Rp 260 Jt)</span>
+                    <span className="font-mono font-bold text-[#10B981]">{laborPct}% ({formatCompactRupiah(laborExp)})</span>
                   </div>
                   <div className="w-full bg-[#E2E8F0] h-2 rounded-full overflow-hidden">
-                    <div className="bg-[#10B981] h-full rounded-full" style={{ width: '28%' }} />
+                    <div className="bg-[#10B981] h-full rounded-full transition-all duration-300" style={{ width: `${laborPct}%` }} />
                   </div>
                 </div>
 
                 <div>
                   <div className="flex justify-between text-[#1C2434] mb-1">
                     <span className="font-medium">Vendor Subkon (Kaca/MEP):</span>
-                    <span className="font-mono font-bold text-[#F0950C]">14% (Rp 130 Jt)</span>
+                    <span className="font-mono font-bold text-[#F0950C]">{subPct}% ({formatCompactRupiah(subExp)})</span>
                   </div>
                   <div className="w-full bg-[#E2E8F0] h-2 rounded-full overflow-hidden">
-                    <div className="bg-[#F0950C] h-full rounded-full" style={{ width: '14%' }} />
+                    <div className="bg-[#F0950C] h-full rounded-full transition-all duration-300" style={{ width: `${subPct}%` }} />
                   </div>
                 </div>
 
                 <div>
                   <div className="flex justify-between text-[#1C2434] mb-1">
                     <span className="font-medium">Overhead & Logistik:</span>
-                    <span className="font-mono font-bold text-[#64748B]">6% (Rp 55 Jt)</span>
+                    <span className="font-mono font-bold text-[#64748B]">{ovhPct}% ({formatCompactRupiah(ovhExp)})</span>
                   </div>
                   <div className="w-full bg-[#E2E8F0] h-2 rounded-full overflow-hidden">
-                    <div className="bg-[#64748B] h-full rounded-full" style={{ width: '6%' }} />
+                    <div className="bg-[#64748B] h-full rounded-full transition-all duration-300" style={{ width: `${ovhPct}%` }} />
                   </div>
                 </div>
 
@@ -849,7 +869,7 @@ export function DashboardView() {
                   </div>
                   <div className="flex justify-between">
                     <span>Rata-rata Margin Kontrak:</span>
-                    <strong className="text-[#1C2434]">~30.4% Target</strong>
+                    <strong className="text-[#1C2434]">~{avgTargetMargin}% Target</strong>
                   </div>
                 </div>
 

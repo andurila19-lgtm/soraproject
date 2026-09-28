@@ -47,15 +47,19 @@ export function CostControlView() {
 
   // Breakdown by Category
   const categories = ['Material', 'Upah Tukang', 'Subkontraktor', 'Overhead'] as const;
+  const projectExpenses = selectedProjectId === 'all' 
+    ? expenses 
+    : expenses.filter(e => e.projectId === selectedProjectId);
+
   const categoryStats = categories.map((cat) => {
-    const items = expenses.filter(e => e.category === cat);
+    const items = projectExpenses.filter(e => e.category === cat);
     const budget = items.reduce((acc, e) => acc + e.budgetAllocated, 0);
     const actual = items.reduce((acc, e) => acc + e.actualAmount, 0);
     const diff = budget - actual;
     return { category: cat, budget, actual, diff };
   });
 
-  const flaggedCount = expenses.filter(e => e.variance < 0).length;
+  const flaggedCount = projectExpenses.filter(e => e.variance < 0).length;
 
   return (
     <div className="space-y-6">

@@ -56,6 +56,9 @@ export function HPPQuotationView() {
   const ppnAmount = includePPN ? totalQuotationDPP * 0.11 : 0;
   const finalQuotationGrandTotal = totalQuotationDPP + ppnAmount;
   const estimatedGrossProfit = totalQuotationDPP - totalHPPWithContingency;
+  const calculatedMarginPct = totalQuotationDPP > 0
+    ? ((estimatedGrossProfit / totalQuotationDPP) * 100).toFixed(1)
+    : '30.0';
 
   return (
     <div className="space-y-6">
@@ -153,7 +156,7 @@ export function HPPQuotationView() {
               <span className="badge-tail badge-tail-primary text-xs">Standard Deal</span>
             </div>
             <h4 className="text-2xl font-bold text-[#3C50E0] mt-2">
-              ~30.5%
+              ~{calculatedMarginPct}%
             </h4>
             <span className="text-xs text-[#64748B]">Berdasarkan markup bertingkat</span>
           </div>

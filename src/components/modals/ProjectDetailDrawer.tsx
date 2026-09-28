@@ -463,7 +463,9 @@ export function ProjectDetailDrawer() {
                 <div key={t.id} className="p-3.5 bg-white border border-[#E2E8F0] rounded-sm space-y-2 hover:border-[#3C50E0] transition">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <div className="font-bold text-[#1C2434]">{t.terminName} ({t.percentage}%)</div>
+                      <div className="font-bold text-[#1C2434]">
+                        {t.terminName.includes('%') ? t.terminName : `${t.terminName} (${t.percentage}%)`}
+                      </div>
                       <div className="text-[11px] text-[#64748B] mt-0.5">
                         <span>Trigger: {t.triggerCondition}</span>
                       </div>

@@ -105,7 +105,19 @@ Sora Project menggunakan relasi bisnis tiga tingkat yang mencerminkan realita pr
 
 ### E. Penagihan Multi Termin & Monitoring Arus Kas
 1. Buka menu **Termin & Invoice**.
-2. Setiap proyek memiliki jadwal pembayaran bertahap (misal: Uang Muka DP 30%, Termin 2 Progres 50%, Termin 3 Handover 20%, Retensi Pemeliharaan 5%).
+2. Setiap proyek memiliki jadwal pembayaran bertahap berbasis pencapaian fisik lapangan yang **totalnya selalu tepat 100%**:
+   - **Skema Komersial B2B (Contoh: Fit-out Kantor Nexus SCBD — Kontrak Rp 1.450.000.000)**:
+     - **Termin I (DP 30%)**: Rp 435.000.000 — Penandatanganan SPK Kontrak & Mobilisasi (*Status: Lunas*)
+     - **Termin II (Termin 1 - 30%)**: Rp 435.000.000 — Trigger Progres Fisik 40% (MEP & Rangka Gypsum Siap) (*Status: Lunas*)
+     - **Termin III (Termin 2 - 30%)**: Rp 435.000.000 — Trigger Progres Fisik 75% (Cabinet Masuk & Pemasangan Kaca) (*Status: Menunggu Pembayaran*)
+     - **Retensi Pemeliharaan (10%)**: Rp 145.000.000 — Serah Terima Pertama (BAST 1) + Garansi Pemeliharaan 60 Hari (*Status: Draft*)
+     - 👉 **Kalkulasi**: 30% + 30% + 30% + 10% = **Tepat 100%** (Total Tagihan: Rp 1.450.000.000).
+   - **Skema Residensial / Retail (Contoh: Penthouse Kemang Village — Kontrak Rp 1.880.000.000)**:
+     - **Termin I (DP 40%)**: Rp 752.000.000 — Penandatanganan SPK & Pengadaan Kayu Solid Walnut (*Status: Lunas*)
+     - **Termin II (Termin 1 - 30%)**: Rp 564.000.000 — Trigger Progres Fisik 50% (Fabrikasi Walnut & Panel Selesai) (*Status: Menunggu Pembayaran*)
+     - **Termin III (Termin 2 - 20%)**: Rp 376.000.000 — Trigger Progres Fisik 80% (Instalasi Panel & Hidden Door) (*Status: Draft*)
+     - **Retensi Pemeliharaan (10%)**: Rp 188.000.000 — BAST + Garansi Pemeliharaan 90 Hari (*Status: Draft*)
+     - 👉 **Kalkulasi**: 40% + 30% + 20% + 10% = **Tepat 100%** (Total Tagihan: Rp 1.880.000.000).
 3. Setiap termin memiliki:
    - **Trigger Progres Fisik**: Syarat persentase pekerjaan sebelum tagihan boleh diterbitkan.
    - **Nomor Invoice Resmi & Jatuh Tempo**.

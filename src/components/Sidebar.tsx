@@ -32,6 +32,8 @@ export function Sidebar({ isMobileOpen, onCloseMobile }: SidebarProps) {
     setActiveTab, 
     projects, 
     termins, 
+    workers,
+    purchaseOrders,
     role, 
     isSidebarCollapsed, 
     toggleSidebarCollapse 
@@ -42,6 +44,8 @@ export function Sidebar({ isMobileOpen, onCloseMobile }: SidebarProps) {
   const totalPendingTerminAmount = termins
     .filter(t => t.status === 'Jatuh Tempo' || t.status === 'Menunggu Pembayaran')
     .reduce((acc, t) => acc + t.amount, 0);
+  const pendingPOCount = purchaseOrders?.filter(p => p.status === 'Pending Approval').length || 0;
+  const activeWorkersCount = workers?.filter(w => w.status === 'Aktif di Site' || w.status === 'Workshop Cibubur').length || 0;
 
   const menuSections = [
     {
@@ -57,7 +61,7 @@ export function Sidebar({ isMobileOpen, onCloseMobile }: SidebarProps) {
       items: [
         { id: 'progress', label: 'Progres & Foto Site', icon: CalendarRange, badge: 'Live' },
         { id: 'tk-vendor', label: 'Tenaga Kerja & Vendor', icon: HardHat, badge: null },
-        { id: 'procurement', label: 'Procurement PO', icon: ShoppingBag, badge: '1 Baru' },
+        { id: 'procurement', label: 'Procurement PO', icon: ShoppingBag, badge: pendingPOCount > 0 ? `${pendingPOCount} Baru` : null },
       ],
     },
     {
@@ -245,7 +249,7 @@ export function Sidebar({ isMobileOpen, onCloseMobile }: SidebarProps) {
                   {role === 'Owner' && formatCompactRupiah(totalContract)}
                   {role === 'Kepala Produksi' && `${projects.length} Proyek`}
                   {role === 'Admin Keuangan' && formatCompactRupiah(totalPendingTerminAmount)}
-                  {role === 'Pengawas Lapangan' && '34 Personil'}
+                  {role === 'Pengawas Lapangan' && `${activeWorkersCount} Personil`}
                 </span>
               </div>
               <div className="w-full bg-[#1C2434] h-1.5 rounded-full overflow-hidden">
@@ -258,7 +262,8 @@ export function Sidebar({ isMobileOpen, onCloseMobile }: SidebarProps) {
                   style={{ 
                     width: role === 'Owner' ? '68%' :
                            role === 'Kepala Produksi' ? '75%' :
-                           role === 'Admin Keuangan' ? '50%' : '90%' 
+                           role === 'Admin Keuangan' ? '50%' : 
+                           workers && workers.length > 0 ? `${Math.round((activeWorkersCount / workers.length) * 100)}%` : '85%'
                   }} 
                 />
               </div>
