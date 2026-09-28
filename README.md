@@ -1,36 +1,73 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🏗️ Sora Project — Enterprise Contractor Operational & Cost Control System
 
-## Getting Started
+> **Platform Operasional & Kontrol HPP Real-time untuk Kontraktor Interior & Workshop Joinery B2B.**  
+> Domain Produksi: **[https://soraproject.reaksy.com](https://soraproject.reaksy.com)**
 
-First, run the development server:
+---
+
+## 📖 Dokumentasi Lengkap
+Buku panduan lengkap operasional dan pengoperasian bagi Pemilik Bisnis (*Business Owner*), Kepala Produksi, Admin Keuangan, dan Pengawas Lapangan dapat dibaca di:
+👉 **[DOKUMENTASI_PANDUAN_SORA_PROJECT.md](./DOKUMENTASI_PANDUAN_SORA_PROJECT.md)**
+
+---
+
+## 🚀 Fitur Unggulan Sistem
+
+1. **Partner → Multiple Project → End User Architecture**:
+   - Menghubungkan Partner B2B (Arsitek / Konsultan / Main Contractor) dengan banyak proyek fit-out dan merek *End User*.
+2. **Estimator HPP & Generator Dokumen Quotation Deal**:
+   - Penghitungan Bill of Quantities (BOQ), margin markup bertingkat, dana kontingensi (5%), dan PPN 11% faktur resmi.
+   - Dokumen Penawaran Resmi siap cetak / PDF.
+3. **Pengendalian Biaya Aktual (Cost Control & Variance)**:
+   - Monitoring real-time Plafon HPP vs Biaya Aktual (*Actual Cost*), selisih (*Variance*), dan estimasi laba kotor.
+4. **Alur Pengadaan Bahan & PO Otomatis (Procurement Flow)**:
+   - Permintaan bahan dari lapangan → Persetujuan Owner (*Approval*) → Pembelian/Pengiriman → Otomatis terbukukan ke Biaya Aktual proyek.
+5. **Multi-Termin & Manajemen Cashflow**:
+   - Penagihan bertahap berbasis *trigger* progres fisik (%) lapangan, tracking invoice jatuh tempo, dan verifikasi pelunasan.
+6. **Pengawasan Lapangan & Tenaga Kerja**:
+   - Monitoring slider progres fisik harian, timeline milestone, galeri foto lapangan, laporan harian mandor, serta database tukang & vendor.
+7. **Role-Based Access Control (RBAC)**:
+   - 4 peran terpisah: **Owner**, **Kepala Produksi**, **Admin Keuangan**, dan **Pengawas Lapangan**.
+8. **Audit Trail (Activity Log)**:
+   - Riwayat transparan aktivitas seluruh pengguna sistem: siapa, kapan, dan perubahan apa yang dilakukan.
+9. **Mobile-First Experience**:
+   - Anti-zoom lock (bebas pinch zoom-out liar), form input standar 16px anti-autozoom iOS, dan navigasi ramah layar sentuh.
+
+---
+
+## 💻 Tech Stack
+
+- **Framework**: Next.js 16 (App Router & Turbopack)
+- **Library**: React 19
+- **Bahasa**: TypeScript (Strict Mode)
+- **Styling**: Tailwind CSS & TailAdmin Design System
+- **Icons**: Lucide React
+- **SEO & Metadata**: Dynamic OpenGraph, JSON-LD Structured Data, PWA Manifest, Robots, & Sitemap
+
+---
+
+## 🛠️ Menjalankan Proyek Secara Lokal
 
 ```bash
+# 1. Clone repository
+git clone https://github.com/andurila19-lgtm/soraproject.git
+cd soraproject
+
+# 2. Install dependencies
+npm install
+
+# 3. Jalankan server pengembangan
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+
+# 4. Buka di browser
+# http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Untuk build produksi:
+```bash
+npm run build
+npm run start
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+*© 2026 Sora Project. All rights reserved.*
