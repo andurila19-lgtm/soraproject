@@ -101,7 +101,7 @@ export function Sidebar({ isMobileOpen, onCloseMobile }: SidebarProps) {
 
       {/* TailAdmin Sidebar */}
       <aside
-        className={`fixed lg:static top-0 bottom-0 left-0 z-50 shrink-0 h-screen bg-[#1C2434] text-[#DEE4EE] flex flex-col transition-all duration-300 ease-in-out overflow-x-hidden select-none ${
+        className={`fixed lg:static inset-y-0 left-0 z-50 shrink-0 h-screen h-[100dvh] max-h-[100dvh] lg:h-screen bg-[#1C2434] text-[#DEE4EE] flex flex-col transition-all duration-300 ease-in-out overflow-x-hidden select-none ${
           isMobileOpen 
             ? 'translate-x-0 w-72' 
             : '-translate-x-full lg:translate-x-0'
@@ -159,7 +159,7 @@ export function Sidebar({ isMobileOpen, onCloseMobile }: SidebarProps) {
         </div>
 
         {/* Sidebar Nav Items (Clean, No ugly scrollbars!) */}
-        <div className={`flex-1 overflow-y-auto overflow-x-hidden no-scrollbar py-3.5 space-y-3.5 ${
+        <div className={`flex-1 min-h-0 overflow-y-auto overflow-x-hidden no-scrollbar py-3.5 space-y-3.5 ${
           isSidebarCollapsed ? 'px-2' : 'px-3'
         }`}>
           {visibleSections.map((section) => (
@@ -234,8 +234,11 @@ export function Sidebar({ isMobileOpen, onCloseMobile }: SidebarProps) {
           ))}
         </div>
 
-        {/* Bottom Section (Comfortably padded above any dev tools or screen edge) */}
-        <div className="shrink-0 pb-8 px-3">
+        {/* Bottom Section (Comfortably padded above mobile safe area & dev tools) */}
+        <div 
+          className="shrink-0 px-3 pt-2 pb-4 lg:pb-6"
+          style={{ paddingBottom: 'max(1rem, calc(env(safe-area-inset-bottom, 0px) + 0.5rem))' }}
+        >
           {!isSidebarCollapsed ? (
             <div className="p-3 rounded-lg bg-[#24303F] border border-[#2E3A47] text-xs space-y-2 shadow-xs">
               <div className="flex items-center justify-between text-[#8A99AD]">

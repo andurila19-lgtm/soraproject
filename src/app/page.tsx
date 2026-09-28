@@ -80,7 +80,7 @@ function MainApp() {
   const isCurrentTabPermitted = isTabAllowed(role, activeTab);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#F1F5F9] font-sans text-[#1C2434]">
+    <div className="flex h-screen h-[100dvh] overflow-hidden bg-[#F1F5F9] font-sans text-[#1C2434]">
       {/* Toast Notification TailAdmin */}
       {toastMessage && (
         <div className="fixed bottom-14 sm:bottom-6 right-6 z-50 animate-in slide-in-from-bottom-5 duration-200">
@@ -146,7 +146,9 @@ function MainApp() {
       </div>
 
       {/* Role-Aware Mobile Bottom Bar (with iOS Safe Area) */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#E2E8F0] px-2 py-1.5 flex items-center justify-around text-[10px] shadow-lg pb-[max(0.375rem,env(safe-area-inset-bottom))]">
+      <div className={`lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-md border-t border-[#E2E8F0] px-2 py-1.5 flex items-center justify-around text-[10px] shadow-lg pb-[max(0.375rem,env(safe-area-inset-bottom))] transition-all duration-200 ${
+        isMobileSidebarOpen ? 'translate-y-full opacity-0 pointer-events-none' : 'translate-y-0 opacity-100'
+      }`}>
         {mobileNavItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
