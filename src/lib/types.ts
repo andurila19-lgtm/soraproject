@@ -86,6 +86,7 @@ export interface Project {
 
 export interface BOQItem {
   id: string;
+  projectId: string;
   category: 'Material & Hardware' | 'Tenaga Kerja' | 'Subkontraktor Spesialis' | 'Overhead & Operasional';
   itemDescription: string;
   specification: string;
@@ -164,4 +165,16 @@ export interface PaymentTermin {
   paidDate?: string;
   status: 'Lunas' | 'Menunggu Pembayaran' | 'Jatuh Tempo' | 'Draft / Belum Ditagihkan';
   invoiceNumber: string;
+}
+
+export interface ActivityLog {
+  id: string;
+  timestamp: string;
+  userName: string;
+  role: UserRole;
+  action: string;
+  entityType: 'project' | 'expense' | 'po' | 'termin' | 'partner' | 'progress' | 'boq';
+  entityId: string;
+  entityName: string;
+  details: string;
 }

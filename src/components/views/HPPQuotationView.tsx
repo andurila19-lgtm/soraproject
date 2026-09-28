@@ -39,16 +39,20 @@ export function HPPQuotationView() {
     'Overhead & Operasional',
   ];
 
-  const filteredItems = activeCategory === 'Semua' 
-    ? boqItems 
-    : boqItems.filter(i => i.category === activeCategory);
+  const projectFilteredBOQ = selectedProjectId === 'all'
+    ? boqItems
+    : boqItems.filter(i => i.projectId === selectedProjectId);
 
-  // Summary Calculations
-  const rawHPP = boqItems.reduce((acc, item) => acc + item.totalHPP, 0);
+  const filteredItems = activeCategory === 'Semua' 
+    ? projectFilteredBOQ 
+    : projectFilteredBOQ.filter(i => i.category === activeCategory);
+
+  // Summary Calculations based on selected project
+  const rawHPP = projectFilteredBOQ.reduce((acc, item) => acc + item.totalHPP, 0);
   const contingencyAmount = (rawHPP * contingencyPercent) / 100;
   const totalHPPWithContingency = rawHPP + contingencyAmount;
   
-  const totalQuotationDPP = boqItems.reduce((acc, item) => acc + item.quotationPrice, 0) + contingencyAmount;
+  const totalQuotationDPP = projectFilteredBOQ.reduce((acc, item) => acc + item.quotationPrice, 0) + contingencyAmount;
   const ppnAmount = includePPN ? totalQuotationDPP * 0.11 : 0;
   const finalQuotationGrandTotal = totalQuotationDPP + ppnAmount;
   const estimatedGrossProfit = totalQuotationDPP - totalHPPWithContingency;
@@ -166,21 +170,40 @@ export function HPPQuotationView() {
         </div>
       </div>
 
-      {/* Category Tabs */}
-      <div className="tail-card p-3 flex items-center gap-2 overflow-x-auto">
-        {categories.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setActiveCategory(cat)}
-            className={`text-xs px-3.5 py-1.5 rounded-sm font-medium transition whitespace-nowrap ${
-              activeCategory === cat
-                ? 'bg-[#3C50E0] text-white font-semibold'
-                : 'bg-[#F1F5F9] text-[#64748B] hover:bg-[#E2E8F0]'
-            }`}
+      {/* Project & Category Filter Toolbar */}
+      <div className="tail-card p-3.5 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-bold text-[#1C2434] whitespace-nowrap">Filter Proyek:</span>
+          <select
+            value={selectedProjectId}
+            onChange={(e) => setSelectedProjectId(e.target.value)}
+            className="tail-input py-1.5 text-xs font-semibold text-[#1C2434] bg-white border border-[#E2E8F0] rounded min-h-[36px] max-w-sm"
           >
-            {cat}
-          </button>
-        ))}
+            <option value="all">Semua Proyek Aktif</option>
+            {projects.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name} ({p.partnerName})
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Category Tabs */}
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setActiveCategory(cat)}
+              className={`text-xs px-3.5 py-1.5 rounded-sm font-medium transition whitespace-nowrap ${
+                activeCategory === cat
+                  ? 'bg-[#3C50E0] text-white font-semibold'
+                  : 'bg-[#F1F5F9] text-[#64748B] hover:bg-[#E2E8F0]'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* TailAdmin BOQ Table */}
@@ -277,7 +300,10 @@ export function HPPQuotationView() {
 }
 
 function AddBOQItemModal({ onClose }: { onClose: () => void }) {
-  const { addBOQItem } = useProject();
+  const { addBOQItem, projects, selectedProjectId } = useProject();
+  const [projectId, setProjectId] = useState(
+    selectedProjectId !== 'all' ? selectedProjectId : (projects[0]?.id || '')
+  );
   const [category, setCategory] = useState<BOQItem['category']>('Material & Hardware');
   const [itemDescription, setItemDescription] = useState('');
   const [specification, setSpecification] = useState('');
@@ -288,8 +314,9 @@ function AddBOQItemModal({ onClose }: { onClose: () => void }) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!itemDescription) return;
+    if (!itemDescription || !projectId) return;
     addBOQItem({
+      projectId,
       category,
       itemDescription,
       specification: specification || 'Standar Spesifikasi Arsitektur',
@@ -302,10 +329,13 @@ function AddBOQItemModal({ onClose }: { onClose: () => void }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-xs">
+    <div 
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-xs overscroll-contain modal-backdrop-lock"
+    >
       <form 
         onSubmit={handleSubmit}
-        className="w-full max-w-lg bg-white rounded-md border border-[#E2E8F0] shadow-2xl max-h-[85vh] sm:max-h-[88vh] flex flex-col overflow-hidden my-auto"
+        className="w-full max-w-lg bg-white rounded-lg sm:rounded-md border border-[#E2E8F0] shadow-2xl max-h-[92dvh] sm:max-h-[88vh] flex flex-col overflow-hidden my-auto modal-content-lock touch-pan-y"
       >
         {/* Pinned Modal Header */}
         <div className="px-4 sm:px-6 py-3.5 border-b border-[#E2E8F0] flex items-center justify-between shrink-0 bg-white">
@@ -326,7 +356,22 @@ function AddBOQItemModal({ onClose }: { onClose: () => void }) {
         </div>
 
         {/* Scrollable Form Body */}
-        <div className="flex-1 min-h-0 overflow-y-auto modal-scroll p-4 sm:p-6 space-y-3 sm:space-y-4 text-xs overscroll-contain">
+        <div className="flex-1 min-h-0 overflow-y-auto modal-scroll p-4 sm:p-6 space-y-3 sm:space-y-4 text-xs overscroll-contain touch-pan-y">
+          <div>
+            <label className="block text-[#1C2434] font-semibold mb-1">Pilih Proyek Terkait</label>
+            <select
+              value={projectId}
+              onChange={(e) => setProjectId(e.target.value)}
+              className="tail-input min-h-[38px]"
+            >
+              {projects.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name} ({p.partnerName})
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-[#1C2434] font-semibold mb-1">Kategori Biaya</label>

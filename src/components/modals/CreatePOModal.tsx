@@ -38,10 +38,13 @@ export function CreatePOModal() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-xs">
+    <div 
+      onClick={(e) => { if (e.target === e.currentTarget) setIsCreatePOOpen(false); }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-xs overscroll-contain modal-backdrop-lock"
+    >
       <form 
         onSubmit={handleSubmit}
-        className="w-full max-w-lg bg-white rounded-md border border-[#E2E8F0] shadow-2xl max-h-[85vh] sm:max-h-[88vh] flex flex-col overflow-hidden my-auto"
+        className="w-full max-w-lg bg-white rounded-lg sm:rounded-md border border-[#E2E8F0] shadow-2xl max-h-[92dvh] sm:max-h-[88vh] flex flex-col overflow-hidden my-auto modal-content-lock touch-pan-y"
       >
         {/* Pinned Modal Header */}
         <div className="px-4 sm:px-6 py-3.5 border-b border-[#E2E8F0] flex items-center justify-between shrink-0 bg-white">
@@ -62,7 +65,7 @@ export function CreatePOModal() {
         </div>
 
         {/* Scrollable Form Body */}
-        <div className="flex-1 min-h-0 overflow-y-auto modal-scroll p-4 sm:p-6 space-y-3 sm:space-y-4 text-xs overscroll-contain">
+        <div className="flex-1 min-h-0 overflow-y-auto modal-scroll p-4 sm:p-6 space-y-3 sm:space-y-4 text-xs overscroll-contain touch-pan-y">
           <div>
             <label className="block text-[#1C2434] font-semibold mb-1">Pilih Proyek Penerima</label>
             <select

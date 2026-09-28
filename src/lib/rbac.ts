@@ -29,6 +29,7 @@ export const ROLE_CONFIGS: Record<UserRole, RoleConfig> = {
       'cost-control',
       'termin',
       'laporan',
+      'activity-log',
     ],
   },
   'Kepala Produksi': {

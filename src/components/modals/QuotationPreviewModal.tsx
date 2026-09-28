@@ -35,8 +35,11 @@ export function QuotationPreviewModal() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/40 backdrop-blur-xs">
-      <div className="w-full max-w-4xl bg-white border border-[#E2E8F0] rounded-md shadow-2xl flex flex-col max-h-[85vh] sm:max-h-[90vh] overflow-hidden text-[#1C2434] my-auto">
+    <div 
+      onClick={(e) => { if (e.target === e.currentTarget) setIsQuotationPreviewOpen(false); }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/40 backdrop-blur-xs overscroll-contain modal-backdrop-lock"
+    >
+      <div className="w-full max-w-4xl bg-white border border-[#E2E8F0] rounded-lg sm:rounded-md shadow-2xl flex flex-col max-h-[92dvh] sm:max-h-[90vh] overflow-hidden text-[#1C2434] my-auto modal-content-lock touch-pan-y">
         {/* Top Control Bar */}
         <div className="px-3 sm:px-6 py-3 sm:py-4 border-b border-[#E2E8F0] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 sm:gap-2 no-print bg-white shrink-0">
           <div className="flex items-center justify-between sm:justify-start gap-2">

@@ -12,7 +12,8 @@ import {
   PurchaseOrder, 
   PaymentTermin, 
   SitePhoto, 
-  DailyReport 
+  DailyReport,
+  ActivityLog 
 } from '@/lib/types';
 import { 
   initialPartners, 
@@ -24,7 +25,8 @@ import {
   initialPurchaseOrders, 
   initialTermins, 
   initialSitePhotos, 
-  initialDailyReports 
+  initialDailyReports,
+  initialActivityLogs 
 } from '@/lib/mockData';
 import { isTabAllowed } from '@/lib/rbac';
 
@@ -64,6 +66,7 @@ interface ProjectContextType {
   sitePhotos: SitePhoto[];
   dailyReports: DailyReport[];
   notifications: NotificationItem[];
+  activityLogs: ActivityLog[];
 
   // Mutators
   addPartner: (partner: Omit<Partner, 'id' | 'totalProjects' | 'activeProjects' | 'totalContractValue'>) => void;
@@ -138,6 +141,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
   const [termins, setTermins] = useState<PaymentTermin[]>(initialTermins);
   const [sitePhotos, setSitePhotos] = useState<SitePhoto[]>(initialSitePhotos);
   const [dailyReports, setDailyReports] = useState<DailyReport[]>(initialDailyReports);
+  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>(initialActivityLogs);
 
   const [selectedProjectDetail, setSelectedProjectDetail] = useState<Project | null>(null);
 
@@ -173,6 +177,33 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     },
   ]);
 
+  // ============ Activity Log Helper ============
+  const logActivity = (
+    action: string,
+    entityType: ActivityLog['entityType'],
+    entityId: string,
+    entityName: string,
+    details: string,
+  ) => {
+    const roleNames: Record<UserRole, string> = {
+      'Owner': 'Owner',
+      'Kepala Produksi': 'Budi Santoso',
+      'Admin Keuangan': 'Admin Keuangan',
+      'Pengawas Lapangan': 'Rian Pratama',
+    };
+    const newLog: ActivityLog = {
+      id: `log-${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      userName: roleNames[role] || role,
+      role,
+      action,
+      entityType,
+      entityId,
+      entityName,
+      details,
+    };
+    setActivityLogs(prev => [newLog, ...prev]);
+  };
 
   const addPartner = (newP: Omit<Partner, 'id' | 'totalProjects' | 'activeProjects' | 'totalContractValue'>) => {
     const p: Partner = {
@@ -183,6 +214,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
       totalContractValue: 0,
     };
     setPartners(prev => [p, ...prev]);
+    logActivity('Tambah partner B2B baru', 'partner', p.id, p.name, `Partner "${p.name}" (${p.type}) ditambahkan ke database.`);
     showToast(`Partner B2B "${p.name}" berhasil ditambahkan.`);
   };
 
@@ -214,12 +246,15 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
       return pt;
     }));
 
+    logActivity('Buat proyek baru', 'project', newPrj.id, newPrj.name, `Proyek "${newPrj.name}" (${code}) dibuat. Nilai kontrak Rp ${data.contractValue.toLocaleString('id-ID')}.`);
     showToast(`Proyek baru "${newPrj.name}" (${code}) berhasil dibuat!`);
   };
 
   const updateProjectProgress = (projectId: string, newProgress: number) => {
+    let projectName = '';
     setProjects(prev => prev.map(p => {
       if (p.id === projectId) {
+        projectName = p.name;
         return {
           ...p,
           progress: Math.min(100, Math.max(0, newProgress)),
@@ -228,6 +263,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
       }
       return p;
     }));
+    logActivity(`Update progress fisik menjadi ${newProgress}%`, 'progress', projectId, projectName, `Progress fisik proyek diperbarui ke ${newProgress}%.`);
     showToast(`Progress fisik proyek diperbarui menjadi ${newProgress}%.`);
   };
 
@@ -241,6 +277,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
       quotationPrice,
     };
     setBOQItems(prev => [...prev, newBOQ]);
+    logActivity('Tambah item BOQ', 'boq', newBOQ.id, item.itemDescription, `Item BOQ "${item.itemDescription}" (HPP: Rp ${totalHPP.toLocaleString('id-ID')}, Markup: ${item.markupPercent}%).`);
     showToast(`Item BOQ "${item.itemDescription}" berhasil ditambahkan.`);
   };
 
@@ -269,11 +306,26 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
       return p;
     }));
 
+    logActivity(
+      isOver ? 'Catat pengeluaran (OVERBUDGET)' : 'Catat pengeluaran',
+      'expense',
+      newExp.id,
+      exp.description,
+      `Rp ${exp.actualAmount.toLocaleString('id-ID')} ke ${exp.vendorOrRecipient}. ${isOver ? `Melebihi plafon Rp ${Math.abs(variance).toLocaleString('id-ID')}.` : 'Sesuai plafon.'}`
+    );
     showToast(`Pengeluaran Rp ${exp.actualAmount.toLocaleString('id-ID')} berhasil dicatat.`);
   };
 
   const approveExpense = (id: string) => {
-    setExpenses(prev => prev.map(e => e.id === id ? { ...e, status: 'Approved' } : e));
+    let expName = '';
+    setExpenses(prev => prev.map(e => {
+      if (e.id === id) {
+        expName = e.description;
+        return { ...e, status: 'Approved' };
+      }
+      return e;
+    }));
+    logActivity('Approve pengeluaran', 'expense', id, expName, `Pengeluaran "${expName}" disetujui.`);
     showToast('Biaya telah disetujui oleh Owner / Admin Keuangan.');
   };
 
@@ -286,17 +338,74 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
       status: 'Pending Approval',
     };
     setPurchaseOrders(prev => [newPO, ...prev]);
+    logActivity('Ajukan PO bahan baru', 'po', newPO.id, poData.itemsSummary, `${poNum} senilai Rp ${poData.totalAmount.toLocaleString('id-ID')} ke ${poData.vendorName}.`);
     showToast(`Permintaan PO "${poNum}" diajukan. Menunggu approval Owner.`);
   };
 
   const updatePOStatus = (id: string, status: PurchaseOrder['status']) => {
-    setPurchaseOrders(prev => prev.map(p => p.id === id ? { ...p, status } : p));
+    let poName = '';
+    let poAmount = 0;
+    let poProjectId = '';
+    let poProjectName = '';
+    setPurchaseOrders(prev => prev.map(p => {
+      if (p.id === id) {
+        poName = p.itemsSummary;
+        poAmount = p.totalAmount;
+        poProjectId = p.projectId;
+        poProjectName = p.projectName;
+        return { ...p, status };
+      }
+      return p;
+    }));
+
+    // When PO is received at site, auto-add to project actual cost
+    if (status === 'Diterima Lapangan' && poProjectId && poAmount > 0) {
+      setProjects(prev => prev.map(p => {
+        if (p.id === poProjectId) {
+          const updatedCost = p.actualCost + poAmount;
+          const health = updatedCost > p.hppBudget ? 'Over Budget' : updatedCost > p.hppBudget * 0.95 ? 'Perlu Perhatian' : 'On Track';
+          return {
+            ...p,
+            actualCost: updatedCost,
+            health,
+          };
+        }
+        return p;
+      }));
+
+      // Auto-create expense entry for the PO
+      const autoExp: CostExpense = {
+        id: `exp-po-${Date.now()}`,
+        projectId: poProjectId,
+        projectName: poProjectName,
+        date: new Date().toISOString().split('T')[0],
+        category: 'Material',
+        description: `PO Diterima: ${poName}`,
+        vendorOrRecipient: purchaseOrders.find(p => p.id === id)?.vendorName || 'Vendor PO',
+        budgetAllocated: poAmount,
+        actualAmount: poAmount,
+        variance: 0,
+        status: 'Approved',
+        receiptNo: `AUTO-PO-${id}`,
+        paymentMethod: 'Transfer Bank',
+      };
+      setExpenses(prev => [autoExp, ...prev]);
+    }
+
+    const actionMap: Record<string, string> = {
+      'Disetujui': 'Setujui PO bahan',
+      'Sedang Dikirim': 'Kirim PO ke logistik',
+      'Diterima Lapangan': 'Terima PO di site (masuk actual cost)',
+    };
+    logActivity(actionMap[status] || `Update status PO ke ${status}`, 'po', id, poName, `PO "${poName}" status diubah ke "${status}". Nilai: Rp ${poAmount.toLocaleString('id-ID')}.`);
     showToast(`Status PO diperbarui ke "${status}".`);
   };
 
   const updateTerminStatus = (id: string, status: PaymentTermin['status']) => {
+    let terminName = '';
     setTermins(prev => prev.map(t => {
       if (t.id === id) {
+        terminName = `${t.terminName} - ${t.projectName}`;
         return {
           ...t,
           status,
@@ -305,6 +414,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
       }
       return t;
     }));
+    logActivity(`Update termin ke "${status}"`, 'termin', id, terminName, `Status termin diubah ke "${status}".`);
     showToast(`Status Termin diperbarui menjadi "${status}".`);
   };
 
@@ -315,6 +425,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
       date: new Date().toISOString().split('T')[0],
     };
     setSitePhotos(prev => [newPhoto, ...prev]);
+    logActivity('Upload foto lapangan', 'progress', photo.projectId, photo.area, `Foto dokumentasi area "${photo.area}" diunggah.`);
     showToast(`Foto dokumentasi lapangan untuk area "${photo.area}" berhasil diunggah.`);
   };
 
@@ -325,6 +436,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
       date: new Date().toISOString().split('T')[0],
     };
     setDailyReports(prev => [newReport, ...prev]);
+    logActivity('Buat laporan harian site', 'progress', report.projectId, `Laporan ${report.pic}`, `Cuaca: ${report.weather}. ${report.tukangCount} tukang. ${report.summary.substring(0, 80)}...`);
     showToast(`Laporan Harian Lapangan berhasil disimpan.`);
   };
 
@@ -359,6 +471,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
         sitePhotos,
         dailyReports,
         notifications,
+        activityLogs,
         addPartner,
         addProject,
         updateProjectProgress,

@@ -14,6 +14,7 @@ import { ProcurementView } from '@/components/views/ProcurementView';
 import { TerminView } from '@/components/views/TerminView';
 import { ProgressView } from '@/components/views/ProgressView';
 import { LaporanView } from '@/components/views/LaporanView';
+import { ActivityLogView } from '@/components/views/ActivityLogView';
 
 import { CreateProjectModal } from '@/components/modals/CreateProjectModal';
 import { AddExpenseModal } from '@/components/modals/AddExpenseModal';
@@ -137,6 +138,7 @@ function MainApp() {
                 {activeTab === 'procurement' && <ProcurementView />}
                 {activeTab === 'termin' && <TerminView />}
                 {activeTab === 'laporan' && <LaporanView />}
+                {activeTab === 'activity-log' && <ActivityLogView />}
               </>
             )}
           </div>

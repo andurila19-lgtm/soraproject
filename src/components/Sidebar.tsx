@@ -12,7 +12,8 @@ import {
   HardHat, 
   ShoppingBag, 
   CreditCard, 
-  FileBarChart2, 
+  FileBarChart2,
+  History,
   X,
   PanelLeftClose,
   PanelLeftOpen
@@ -66,6 +67,7 @@ export function Sidebar({ isMobileOpen, onCloseMobile }: SidebarProps) {
         { id: 'cost-control', label: 'Cost Control HPP', icon: TrendingDown, badge: 'Alert' },
         { id: 'termin', label: 'Termin Invoicing', icon: CreditCard, badge: pendingTerminCount > 0 ? `${pendingTerminCount}` : null },
         { id: 'laporan', label: 'Laporan P&L Proyek', icon: FileBarChart2, badge: null },
+        { id: 'activity-log', label: 'Riwayat Aktivitas', icon: History, badge: null },
       ],
     },
   ];

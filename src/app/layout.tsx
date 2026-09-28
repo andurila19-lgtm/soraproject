@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import { MobileViewportLock } from "@/components/MobileViewportLock";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://soraproject.reaksy.com";
 
@@ -7,6 +8,10 @@ export const viewport: Viewport = {
   themeColor: "#1C2434",
   width: "device-width",
   initialScale: 1,
+  maximumScale: 1,
+  minimumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
 };
 
 export const metadata: Metadata = {
@@ -96,12 +101,19 @@ export default function RootLayout({
   return (
     <html lang="id" className="h-full">
       <head>
+        <meta
+          name="viewport"
+          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover"
+        />
+        <meta name="HandheldFriendly" content="true" />
+        <meta name="MobileOptimized" content="width" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
       <body className="min-h-full flex flex-col bg-[#F1F5F9] text-[#64748B] antialiased">
+        <MobileViewportLock />
         {children}
       </body>
     </html>
