@@ -15,6 +15,8 @@ import { TerminView } from '@/components/views/TerminView';
 import { ProgressView } from '@/components/views/ProgressView';
 import { LaporanView } from '@/components/views/LaporanView';
 import { ActivityLogView } from '@/components/views/ActivityLogView';
+import { UserManagementView } from '@/components/views/UserManagementView';
+import { LoginView } from '@/components/views/LoginView';
 
 import { CreateProjectModal } from '@/components/modals/CreateProjectModal';
 import { AddExpenseModal } from '@/components/modals/AddExpenseModal';
@@ -38,8 +40,37 @@ import {
 import { isTabAllowed, ROLE_CONFIGS } from '@/lib/rbac';
 
 function MainApp() {
-  const { activeTab, setActiveTab, toastMessage, role } = useProject();
+  const { activeTab, setActiveTab, toastMessage, role, isAuthenticated, isAuthLoaded } = useProject();
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  // Prevent SSR hydration mismatch: render identical loading state until client mounts and reads storage
+  if (!isAuthLoaded) {
+    return (
+      <div className="flex h-screen h-[100dvh] w-full items-center justify-center bg-[#0B1120] text-white">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-[#3C50E0] border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs text-[#94A3B8] font-mono tracking-wider">SORA PROJECT SYSTEM...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // If not logged in, render the Enterprise Login Page
+  if (!isAuthenticated) {
+    return (
+      <>
+        {toastMessage && (
+          <div className="fixed bottom-6 right-6 z-50 animate-in slide-in-from-bottom-5 duration-200">
+            <div className="flex items-center gap-3 px-4 py-3 rounded-sm bg-white border border-[#E2E8F0] border-l-4 border-l-[#10B981] text-[#1C2434] shadow-lg text-xs font-semibold">
+              <CheckCircle2 className="w-5 h-5 text-[#10B981] shrink-0" />
+              <span>{toastMessage}</span>
+            </div>
+          </div>
+        )}
+        <LoginView />
+      </>
+    );
+  }
 
   // Role-based mobile navigation items
   const getMobileNavItems = () => {
@@ -139,6 +170,7 @@ function MainApp() {
                 {activeTab === 'termin' && <TerminView />}
                 {activeTab === 'laporan' && <LaporanView />}
                 {activeTab === 'activity-log' && <ActivityLogView />}
+                {activeTab === 'users' && <UserManagementView />}
               </>
             )}
           </div>

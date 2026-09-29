@@ -43,6 +43,9 @@ export function ProjectDetailDrawer() {
     vendors,
     activityLogs,
     partners,
+    addendums,
+    opnames,
+    updateAddendumStatus,
   } = useProject();
 
   const [activeTab, setActiveTab] = useState<DrawerTab>('overview');
@@ -55,6 +58,8 @@ export function ProjectDetailDrawer() {
   const projectExpenses = expenses.filter(e => e.projectId === selectedProjectDetail.id);
   const projectTermins = termins.filter(t => t.projectId === selectedProjectDetail.id);
   const projectBOQ = boqItems.filter(b => b.projectId === selectedProjectDetail.id);
+  const projectAddendums = addendums.filter(a => a.projectId === selectedProjectDetail.id);
+  const projectOpnames = opnames.filter(o => o.projectId === selectedProjectDetail.id);
   const projectLogs = activityLogs.filter(l => 
     l.entityId === selectedProjectDetail.id || 
     l.entityName.includes(selectedProjectDetail.name.substring(0, 20))
@@ -82,10 +87,10 @@ export function ProjectDetailDrawer() {
   const tabs = [
     { id: 'overview' as DrawerTab, label: 'Ringkasan', icon: Building2 },
     { id: 'milestones' as DrawerTab, label: `Timeline (${selectedProjectDetail.milestones.length})`, icon: Calendar },
-    { id: 'cost-budget' as DrawerTab, label: 'Biaya & Budget', icon: DollarSign },
+    { id: 'cost-budget' as DrawerTab, label: 'Biaya & Addendum', icon: DollarSign },
     { id: 'termins' as DrawerTab, label: `Termin (${projectTermins.length})`, icon: CreditCard },
     { id: 'team-vendor' as DrawerTab, label: 'Tim & Vendor', icon: HardHat },
-    { id: 'field' as DrawerTab, label: `Lapangan (${projectPhotos.length + projectReports.length})`, icon: Camera },
+    { id: 'field' as DrawerTab, label: `Lapangan (${projectPhotos.length + projectReports.length + projectOpnames.length})`, icon: Camera },
     { id: 'history' as DrawerTab, label: `Riwayat (${projectLogs.length})`, icon: History },
   ];
 
@@ -314,6 +319,58 @@ export function ProjectDetailDrawer() {
                   </div>
                 </div>
               )}
+
+              {/* Addendum & Scope Changes Section */}
+              <div className="tail-card p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="font-bold text-xs text-[#1C2434] uppercase tracking-wider block">
+                      Addendum & Perubahan Pekerjaan
+                    </span>
+                    <span className="text-[11px] text-[#64748B]">
+                      Pekerjaan tambahan, perubahan scope, dan penyesuaian nilai kontrak
+                    </span>
+                  </div>
+                  <span className="badge-tail badge-tail-primary text-xs">
+                    {projectAddendums.length} Dokumen
+                  </span>
+                </div>
+
+                {projectAddendums.length > 0 ? (
+                  <div className="space-y-2">
+                    {projectAddendums.map((add) => (
+                      <div key={add.id} className="p-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-sm space-y-1.5">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <span className="font-mono text-[11px] text-[#3C50E0] font-bold">{add.addendumNumber}</span>
+                            <h5 className="font-bold text-xs text-[#1C2434] mt-0.5">{add.title}</h5>
+                          </div>
+                          <span className={`badge-tail text-[10px] shrink-0 ${
+                            add.status === 'Disetujui Klien'
+                              ? 'badge-tail-success'
+                              : add.status === 'Ditolak'
+                              ? 'badge-tail-danger'
+                              : 'badge-tail-warning'
+                          }`}>
+                            {add.status}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-[#64748B] leading-relaxed">
+                          {add.description}
+                        </p>
+                        <div className="flex items-center justify-between pt-1 border-t border-[#E2E8F0]/60 text-[11px]">
+                          <span className="text-[#64748B]">Nilai: <strong className={add.amount >= 0 ? 'text-[#10B981]' : 'text-[#D34053]'}>{add.amount >= 0 ? '+' : ''}{formatRupiah(add.amount)}</strong></span>
+                          <span className="text-[#64748B]">Waktu: <strong className="text-[#1C2434]">{(add.timeImpactDays || 0) > 0 ? `+${add.timeImpactDays} hari` : 'Paralel'}</strong></span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-3 bg-[#F8FAFC] border border-dashed border-[#CBD5E1] rounded text-center text-xs text-[#64748B]">
+                    Belum ada addendum pekerjaan tambahan pada proyek ini.
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -434,6 +491,45 @@ export function ProjectDetailDrawer() {
                 ))}
                 {projectExpenses.length === 0 && (
                   <div className="text-center text-[#64748B] py-4 italic">Belum ada pengeluaran tercatat</div>
+                )}
+              </div>
+
+              {/* Addendums & Change Orders on Cost Tab */}
+              <div className="space-y-2 pt-2 border-t border-[#E2E8F0]">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-[10px] text-[#64748B] uppercase tracking-wider">
+                    Addendum Kontrak & Change Order ({projectAddendums.length})
+                  </span>
+                  <span className="text-[11px] text-[#3C50E0] font-semibold">Penyesuaian Biaya & Scope</span>
+                </div>
+                {projectAddendums.map((add) => (
+                  <div key={add.id} className="p-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-sm space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="font-mono text-[11px] text-[#3C50E0] font-bold">{add.addendumNumber} • {add.type}</div>
+                        <div className="font-bold text-xs text-[#1C2434]">{add.title}</div>
+                      </div>
+                      <span className={`badge-tail text-[10px] shrink-0 ${
+                        add.status === 'Disetujui Klien' ? 'badge-tail-success' : add.status === 'Ditolak' ? 'badge-tail-danger' : 'badge-tail-warning'
+                      }`}>
+                        {add.status}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs pt-1 border-t border-[#E2E8F0]/60">
+                      <span className="font-mono font-bold text-xs text-[#10B981]">{formatRupiah(add.amount)}</span>
+                      {add.status === 'Waiting Approval' && (role === 'Owner' || role === 'Admin Keuangan') && (
+                        <button
+                          onClick={() => updateAddendumStatus(add.id, 'Disetujui Klien')}
+                          className="px-2.5 py-1 rounded bg-[#10B981] hover:bg-[#059669] text-white font-bold text-xs transition"
+                        >
+                          Setujui Addendum
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {projectAddendums.length === 0 && (
+                  <div className="text-center text-[#64748B] py-3 italic text-xs">Belum ada addendum biaya untuk proyek ini</div>
                 )}
               </div>
             </div>
@@ -596,7 +692,58 @@ export function ProjectDetailDrawer() {
                 </div>
               )}
 
-              {projectPhotos.length === 0 && projectReports.length === 0 && (
+              {/* Hasil Opname Bersama Lapangan */}
+              <div className="space-y-2 pt-2 border-t border-[#E2E8F0]">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-[10px] text-[#64748B] uppercase tracking-wider">
+                    Hasil Joint Opname Site & Klien ({projectOpnames.length})
+                  </span>
+                  <span className="badge-tail badge-tail-primary text-[10px]">BA Opname Lapangan</span>
+                </div>
+                {projectOpnames.map((op) => (
+                  <div key={op.id} className="tail-card p-3 space-y-2 text-xs">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <div className="font-bold text-[#1C2434]">{op.category} — {op.itemDescription}</div>
+                        <div className="text-[11px] text-[#64748B] font-mono mt-0.5">{formatDateIndo(op.date)} • {op.verifiedBy}</div>
+                      </div>
+                      <span className={`badge-tail text-[10px] shrink-0 ${
+                        op.status === 'Disetujui Klien' ? 'badge-tail-success' : op.status === 'Ditolak' ? 'badge-tail-danger' : 'badge-tail-warning'
+                      }`}>
+                        {op.status}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-4 gap-2 p-2 bg-[#F8FAFC] rounded border border-[#E2E8F0] font-mono text-[11px] text-center">
+                      <div>
+                        <span className="text-[10px] text-[#64748B] block">Vol Awal</span>
+                        <span className="font-bold text-[#1C2434]">{op.initialVolume} {op.unit}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-[#64748B] block">Vol Aktual</span>
+                        <span className="font-bold text-[#3C50E0]">{op.actualVolume} {op.unit}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-[#64748B] block">Selisih</span>
+                        <span className={`font-bold ${op.differenceVolume >= 0 ? 'text-[#10B981]' : 'text-[#D34053]'}`}>
+                          {op.differenceVolume >= 0 ? '+' : ''}{op.differenceVolume} {op.unit}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-[#64748B] block">Nilai</span>
+                        <span className={`font-bold ${op.adjustmentValue >= 0 ? 'text-[#10B981]' : 'text-[#D34053]'}`}>
+                          {op.adjustmentValue >= 0 ? '+' : ''}{formatCompactRupiah(op.adjustmentValue)}
+                        </span>
+                      </div>
+                    </div>
+                    <p className="text-[11px] text-[#64748B] italic">Catatan: &quot;{op.notes}&quot;</p>
+                  </div>
+                ))}
+                {projectOpnames.length === 0 && (
+                  <div className="text-center text-[#64748B] py-3 italic text-xs">Belum ada catatan opname bersama pada proyek ini</div>
+                )}
+              </div>
+
+              {projectPhotos.length === 0 && projectReports.length === 0 && projectOpnames.length === 0 && (
                 <div className="text-center text-[#64748B] py-6 italic text-xs">Belum ada dokumentasi lapangan</div>
               )}
             </div>

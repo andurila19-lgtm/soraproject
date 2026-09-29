@@ -167,13 +167,56 @@ export interface PaymentTermin {
   invoiceNumber: string;
 }
 
+export interface OpnameItem {
+  id: string;
+  projectId: string;
+  projectName: string;
+  date: string;
+  itemDescription: string;
+  item?: string;
+  category: string;
+  workCategory?: string;
+  unit: string;
+  initialVolume: number;
+  actualVolume: number;
+  differenceVolume: number;
+  difference?: number;
+  unitPrice: number;
+  adjustmentValue: number; // differenceVolume * unitPrice
+  adjustmentCost?: number;
+  notes: string;
+  status: 'Waiting Approval' | 'Disetujui Klien' | 'Ditolak' | 'Menunggu Approval';
+  verifiedBy: string;
+  jointVerifier?: string;
+}
+
+export interface ProjectAddendum {
+  id: string;
+  projectId: string;
+  projectName: string;
+  clientName?: string;
+  addendumNumber: string;
+  date: string;
+  submissionDate?: string;
+  type: 'Pekerjaan Tambahan' | 'Perubahan Pekerjaan' | 'Penyesuaian Scope' | 'Perubahan Desain' | 'Penyesuaian Opname' | 'Pengurangan Pekerjaan';
+  title: string;
+  description: string;
+  amount: number;
+  status: 'Waiting Approval' | 'Disetujui Klien' | 'Ditolak' | 'Draft';
+  impactOnSchedule: string;
+  timeImpactDays?: number;
+  requestedBy: string;
+  clientApprover?: string;
+  notes: string;
+}
+
 export interface ActivityLog {
   id: string;
   timestamp: string;
   userName: string;
   role: UserRole;
   action: string;
-  entityType: 'project' | 'expense' | 'po' | 'termin' | 'partner' | 'progress' | 'boq';
+  entityType: 'project' | 'expense' | 'po' | 'termin' | 'partner' | 'progress' | 'boq' | 'addendum' | 'opname';
   entityId: string;
   entityName: string;
   details: string;

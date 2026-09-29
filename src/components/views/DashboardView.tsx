@@ -23,7 +23,8 @@ import {
   CheckSquare,
   Sun,
   Wrench,
-  Layers
+  Layers,
+  FolderKanban
 } from 'lucide-react';
 import { formatCompactRupiah, formatRupiah, formatDateIndo } from '@/lib/utils';
 import { TableScrollWrapper } from '@/components/TableScrollWrapper';
@@ -37,6 +38,8 @@ export function DashboardView() {
     expenses, 
     purchaseOrders,
     workers,
+    addendums,
+    opnames,
     setActiveTab,
     setSelectedProjectDetail,
     setIsCreateProjectOpen,
@@ -57,11 +60,18 @@ export function DashboardView() {
 
   const grossProfitEstimate = totalContract - totalHPP;
   const currentMargin = Math.round(((totalContract - totalActual) / (totalContract || 1)) * 100);
+  const netVariance = totalHPP - totalActual;
+  const isNetDeficit = netVariance < 0;
 
   const pendingTermins = termins.filter(t => t.status === 'Jatuh Tempo' || t.status === 'Menunggu Pembayaran');
   const totalPendingTerminAmount = pendingTermins.reduce((acc, t) => acc + t.amount, 0);
 
   const pendingPOs = purchaseOrders.filter(p => p.status === 'Pending Approval');
+  const pendingAddendums = addendums.filter(a => a.status === 'Waiting Approval');
+  const pendingOpnames = opnames.filter(o => o.status === 'Waiting Approval' || o.status === 'Menunggu Approval');
+  const pendingExpenses = expenses.filter(e => e.status !== 'Approved');
+  const totalPendingApprovals = pendingPOs.length + pendingAddendums.length + pendingExpenses.length;
+
   const overbudgetExpenses = expenses.filter(e => e.variance < 0);
   const activeWorkersCount = workers.filter(w => w.status === 'Aktif di Site' || w.status === 'Workshop Cibubur').length;
 
@@ -70,20 +80,22 @@ export function DashboardView() {
     ? expenses
     : expenses.filter(e => e.projectId === selectedProjectId);
 
-  const totalExpActual = relevantExpenses.reduce((acc, e) => acc + e.actualAmount, 0) || 1;
+  const totalExpActualSum = relevantExpenses.reduce((acc, e) => acc + e.actualAmount, 0);
+  const totalExpActual = totalExpActualSum || 1;
   const matExp = relevantExpenses.filter(e => e.category === 'Material').reduce((acc, e) => acc + e.actualAmount, 0);
   const laborExp = relevantExpenses.filter(e => e.category === 'Upah Tukang').reduce((acc, e) => acc + e.actualAmount, 0);
   const subExp = relevantExpenses.filter(e => e.category === 'Subkontraktor').reduce((acc, e) => acc + e.actualAmount, 0);
   const ovhExp = relevantExpenses.filter(e => e.category === 'Overhead').reduce((acc, e) => acc + e.actualAmount, 0);
 
-  const matPct = Math.round((matExp / totalExpActual) * 100);
-  const laborPct = Math.round((laborExp / totalExpActual) * 100);
-  const subPct = Math.round((subExp / totalExpActual) * 100);
-  const ovhPct = Math.max(0, 100 - (matPct + laborPct + subPct));
+  const hasExpenses = totalExpActualSum > 0;
+  const matPct = hasExpenses ? Math.round((matExp / totalExpActual) * 100) : 0;
+  const laborPct = hasExpenses ? Math.round((laborExp / totalExpActual) * 100) : 0;
+  const subPct = hasExpenses ? Math.round((subExp / totalExpActual) * 100) : 0;
+  const ovhPct = hasExpenses ? Math.max(0, 100 - (matPct + laborPct + subPct)) : 0;
 
   const avgTargetMargin = filteredProjects.length > 0
     ? (filteredProjects.reduce((acc, p) => acc + p.targetMargin, 0) / filteredProjects.length).toFixed(1)
-    : '30.0';
+    : '0.0';
 
   return (
     <div className="space-y-6">
@@ -492,8 +504,85 @@ export function DashboardView() {
         )}
       </div>
 
+      {/* Executive Financial & Control Bar for Owner */}
+      {role === 'Owner' && (
+        <div className="p-4 bg-white rounded-sm border border-[#E2E8F0] shadow-xs grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+          <div className="flex items-center justify-between sm:justify-start gap-3 border-b sm:border-b-0 sm:border-r border-[#E2E8F0] pb-2 sm:pb-0 sm:pr-4">
+            <div>
+              <span className="text-[#64748B] block text-[11px]">Plafon Anggaran HPP</span>
+              <span className="font-bold font-mono text-sm text-[#1C2434]">{formatCompactRupiah(totalHPP)}</span>
+            </div>
+            <span className="badge-tail badge-tail-primary text-[10px]">RAB Disetujui</span>
+          </div>
+
+          <div className="flex items-center justify-between sm:justify-start gap-3 border-b sm:border-b-0 sm:border-r border-[#E2E8F0] pb-2 sm:pb-0 sm:pr-4">
+            <div>
+              <span className="text-[#64748B] block text-[11px]">Net Cost Variance</span>
+              <span className={`font-bold font-mono text-sm ${isNetDeficit ? 'text-[#D34053]' : 'text-[#10B981]'}`}>
+                {isNetDeficit ? '-' : '+'}{formatCompactRupiah(Math.abs(netVariance))}
+              </span>
+            </div>
+            <span className={`badge-tail ${isNetDeficit ? 'badge-tail-danger' : 'badge-tail-success'} text-[10px]`}>
+              {isNetDeficit ? 'Defisit' : 'Efisiensi Hemat'}
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between sm:justify-start gap-3 border-b sm:border-b-0 sm:border-r border-[#E2E8F0] pb-2 sm:pb-0 sm:pr-4">
+            <div>
+              <span className="text-[#64748B] block text-[11px]">Approval Pending Owner</span>
+              <span className="font-bold font-mono text-sm text-[#F0950C]">
+                {totalPendingApprovals} Berkas Menunggu
+              </span>
+            </div>
+            <button
+              onClick={() => setActiveTab('cost-control')}
+              className="badge-tail badge-tail-warning text-[10px] hover:underline cursor-pointer"
+            >
+              {pendingAddendums.length} Addendum • {pendingPOs.length} PO
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between sm:justify-start gap-3">
+            <div>
+              <span className="text-[#64748B] block text-[11px]">Status Portofolio</span>
+              <span className="font-bold text-sm text-[#10B981]">
+                {filteredProjects.length} Proyek Aktif
+              </span>
+            </div>
+            <span className="badge-tail badge-tail-success text-[10px]">100% On Schedule</span>
+          </div>
+        </div>
+      )}
+
       {/* Role-Aware Operational Attention Alerts */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Addendum Alert for Owner & Admin Keuangan */}
+        {(role === 'Owner' || role === 'Admin Keuangan') && pendingAddendums.length > 0 && (
+          <div className="rounded-sm border border-[#3C50E0]/30 bg-[#3C50E0]/5 p-4 flex items-start gap-3">
+            <div className="p-2 rounded-full bg-[#3C50E0]/15 text-[#3C50E0] shrink-0">
+              <FileText className="w-5 h-5" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center justify-between">
+                <h5 className="text-sm font-bold text-[#1C2434]">Otorisasi Addendum Pekerjaan Diperlukan</h5>
+                <span className="badge-tail badge-tail-primary">Addendum Pending</span>
+              </div>
+              <p className="text-xs text-[#64748B] mt-1">
+                <strong>{pendingAddendums[0].projectName}</strong>: {pendingAddendums[0].title} senilai <strong className="text-[#10B981]">+{formatRupiah(pendingAddendums[0].amount)}</strong>
+              </p>
+              <div className="mt-2.5 flex items-center justify-between">
+                <span className="text-xs text-[#64748B]">Pemohon: {pendingAddendums[0].requestedBy}</span>
+                <button
+                  onClick={() => setActiveTab('cost-control')}
+                  className="text-xs font-semibold text-[#3C50E0] hover:underline flex items-center gap-1"
+                >
+                  Review & Setujui Addendum <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* PO Alert for Owner, Kepala Produksi, Admin Keuangan */}
         {(role === 'Owner' || role === 'Kepala Produksi') && pendingPOs.length > 0 && (
           <div className="rounded-sm border border-[#F0950C]/30 bg-[#F0950C]/5 p-4 flex items-start gap-3">
@@ -722,80 +811,100 @@ export function DashboardView() {
                   )}
                 </thead>
                 <tbody>
-                  {filteredProjects.map((p) => (
-                    <tr key={p.id}>
-                      <td className="font-mono font-bold text-[#3C50E0] text-xs">
-                        {p.code}
-                      </td>
-                      <td>
-                        <div className="font-bold text-[#1C2434] hover:text-[#3C50E0] cursor-pointer" onClick={() => setSelectedProjectDetail(p)}>
-                          {p.name}
+                  {filteredProjects.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="px-6 py-12 text-center">
+                        <div className="flex flex-col items-center justify-center">
+                          <FolderKanban className="w-10 h-10 text-[#94A3B8] mb-2" />
+                          <p className="text-sm font-semibold text-[#1C2434]">Belum Ada Proyek Terdaftar</p>
+                          <p className="text-xs text-[#64748B] mt-1 max-w-sm">
+                            Sistem dalam keadaan bersih (0 proyek). Klik tombol di bawah untuk menambahkan proyek interior perdana Anda.
+                          </p>
+                          <button
+                            onClick={() => setIsCreateProjectOpen(true)}
+                            className="mt-3.5 btn-tail-primary text-xs py-2 px-3.5"
+                          >
+                            + Tambah Proyek Baru
+                          </button>
                         </div>
-                        <div className="text-xs text-[#64748B]">
-                          Partner: {p.partnerName} • 📍 {p.location}
-                        </div>
-                      </td>
-
-                      {/* Financial values only for Owner & Admin Keuangan */}
-                      {(role === 'Owner' || role === 'Admin Keuangan') ? (
-                        <>
-                          <td className="text-right font-mono font-bold text-[#1C2434]">
-                            {formatCompactRupiah(p.contractValue)}
-                          </td>
-                          <td className="text-right font-mono">
-                            <div className="text-[#1C2434] font-semibold">{formatCompactRupiah(p.actualCost)}</div>
-                            <div className="text-[11px] text-[#64748B]">HPP: {formatCompactRupiah(p.hppBudget)}</div>
-                          </td>
-                        </>
-                      ) : role === 'Kepala Produksi' ? (
-                        /* PIC and Target Date for Kepala Produksi */
-                        <>
-                          <td>
-                            <div className="font-medium text-[#1C2434] text-xs">{p.picLapangan}</div>
-                            <div className="text-[10px] text-[#64748B]">Fabrikasi: {p.picProduksi}</div>
-                          </td>
-                          <td className="text-xs text-[#64748B]">
-                            {formatDateIndo(p.targetCompletion)}
-                          </td>
-                        </>
-                      ) : (
-                        /* Site details for Pengawas Lapangan */
-                        <>
-                          <td>
-                            <div className="font-medium text-[#1C2434] text-xs">{p.picLapangan}</div>
-                            <div className="text-[10px] text-[#64748B]">Mandor Kayu & MEP</div>
-                          </td>
-                          <td className="text-xs text-[#64748B]">
-                            {formatDateIndo(p.targetCompletion)}
-                          </td>
-                        </>
-                      )}
-
-                      <td>
-                        <div className="flex items-center gap-2 justify-center">
-                          <div className="w-16 bg-[#E2E8F0] h-2 rounded-full overflow-hidden">
-                            <div className="bg-[#3C50E0] h-full rounded-full" style={{ width: `${p.progress}%` }} />
-                          </div>
-                          <span className="font-mono font-bold text-xs text-[#1C2434]">{p.progress}%</span>
-                        </div>
-                      </td>
-                      <td className="text-center">
-                        <span className={`badge-tail ${
-                          p.health === 'On Track' ? 'badge-tail-success' : 'badge-tail-warning'
-                        }`}>
-                          {p.status}
-                        </span>
-                      </td>
-                      <td className="text-center">
-                        <button
-                          onClick={() => setSelectedProjectDetail(p)}
-                          className="btn-tail-secondary text-xs py-1 px-2.5"
-                        >
-                          Detail
-                        </button>
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    filteredProjects.map((p) => (
+                      <tr key={p.id}>
+                        <td className="font-mono font-bold text-[#3C50E0] text-xs">
+                          {p.code}
+                        </td>
+                        <td>
+                          <div className="font-bold text-[#1C2434] hover:text-[#3C50E0] cursor-pointer" onClick={() => setSelectedProjectDetail(p)}>
+                            {p.name}
+                          </div>
+                          <div className="text-xs text-[#64748B]">
+                            Partner: {p.partnerName} • 📍 {p.location}
+                          </div>
+                        </td>
+
+                        {/* Financial values only for Owner & Admin Keuangan */}
+                        {(role === 'Owner' || role === 'Admin Keuangan') ? (
+                          <>
+                            <td className="text-right font-mono font-bold text-[#1C2434]">
+                              {formatCompactRupiah(p.contractValue)}
+                            </td>
+                            <td className="text-right font-mono">
+                              <div className="text-[#1C2434] font-semibold">{formatCompactRupiah(p.actualCost)}</div>
+                              <div className="text-[11px] text-[#64748B]">HPP: {formatCompactRupiah(p.hppBudget)}</div>
+                            </td>
+                          </>
+                        ) : role === 'Kepala Produksi' ? (
+                          /* PIC and Target Date for Kepala Produksi */
+                          <>
+                            <td>
+                              <div className="font-medium text-[#1C2434] text-xs">{p.picLapangan}</div>
+                              <div className="text-[10px] text-[#64748B]">Fabrikasi: {p.picProduksi}</div>
+                            </td>
+                            <td className="text-xs text-[#64748B]">
+                              {formatDateIndo(p.targetCompletion)}
+                            </td>
+                          </>
+                        ) : (
+                          /* Site details for Pengawas Lapangan */
+                          <>
+                            <td>
+                              <div className="font-medium text-[#1C2434] text-xs">{p.picLapangan}</div>
+                              <div className="text-[10px] text-[#64748B]">Mandor Kayu & MEP</div>
+                            </td>
+                            <td className="text-xs text-[#64748B]">
+                              {formatDateIndo(p.targetCompletion)}
+                            </td>
+                          </>
+                        )}
+
+                        <td>
+                          <div className="flex items-center gap-2 justify-center">
+                            <div className="w-16 bg-[#E2E8F0] h-2 rounded-full overflow-hidden">
+                              <div className="bg-[#3C50E0] h-full rounded-full" style={{ width: `${p.progress}%` }} />
+                            </div>
+                            <span className="font-mono font-bold text-xs text-[#1C2434]">{p.progress}%</span>
+                          </div>
+                        </td>
+                        <td className="text-center">
+                          <span className={`badge-tail ${
+                            p.health === 'On Track' ? 'badge-tail-success' : 'badge-tail-warning'
+                          }`}>
+                            {p.status}
+                          </span>
+                        </td>
+                        <td className="text-center">
+                          <button
+                            onClick={() => setSelectedProjectDetail(p)}
+                            className="btn-tail-secondary text-xs py-1 px-2.5"
+                          >
+                            Detail
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </TableScrollWrapper>

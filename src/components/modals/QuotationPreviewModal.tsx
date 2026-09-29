@@ -22,7 +22,11 @@ export function QuotationPreviewModal() {
     ? projects[0] 
     : projects.find(p => p.id === selectedProjectId) || projects[0];
 
-  const totalQuotationDPP = boqItems.reduce((acc, item) => acc + item.quotationPrice, 0);
+  const projectBOQItems = currentProject 
+    ? boqItems.filter(item => item.projectId === currentProject.id)
+    : [];
+  const displayItems = projectBOQItems.length > 0 ? projectBOQItems : boqItems;
+  const totalQuotationDPP = displayItems.reduce((acc, item) => acc + item.quotationPrice, 0);
   const ppn = totalQuotationDPP * 0.11;
   const grandTotal = totalQuotationDPP + ppn;
 
@@ -109,15 +113,15 @@ export function QuotationPreviewModal() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 p-4 bg-[#F8FAFC] border border-[#E2E8F0] rounded-sm">
             <div>
               <span className="text-[10px] font-bold uppercase text-[#64748B] block mb-1">Ditujukan Kepada:</span>
-              <div className="font-bold text-[#1C2434] text-sm">{currentProject.partnerName}</div>
-              <div className="text-[#64748B] text-xs">PIC: {currentProject.endUser}</div>
-              <div className="text-[#64748B] text-xs mt-0.5">Lokasi: {currentProject.location}</div>
+              <div className="font-bold text-[#1C2434] text-sm">{currentProject?.partnerName || 'Klien / Partner B2B'}</div>
+              <div className="text-[#64748B] text-xs">PIC: {currentProject?.endUser || '-'}</div>
+              <div className="text-[#64748B] text-xs mt-0.5">Lokasi: {currentProject?.location || '-'}</div>
             </div>
 
             <div>
               <span className="text-[10px] font-bold uppercase text-[#64748B] block mb-1">Ruang Lingkup Proyek:</span>
-              <div className="font-bold text-[#1C2434] text-sm">{currentProject.name}</div>
-              <div className="text-[#64748B] text-xs">Tipe: {currentProject.projectType} Fit-out</div>
+              <div className="font-bold text-[#1C2434] text-sm">{currentProject?.name || 'Proyek Interior Fit-out'}</div>
+              <div className="text-[#64748B] text-xs">Tipe: {currentProject?.projectType || 'Interior'} Fit-out</div>
               <div className="text-[#64748B] text-xs mt-0.5">Durasi Pelaksanaan: 75 Hari Kalender Kerja</div>
             </div>
           </div>
@@ -140,7 +144,7 @@ export function QuotationPreviewModal() {
                   </tr>
                 </thead>
                 <tbody>
-                  {boqItems.map((item, idx) => (
+                  {displayItems.map((item, idx) => (
                     <tr key={item.id}>
                       <td className="text-center font-mono text-xs">{idx + 1}</td>
                       <td>

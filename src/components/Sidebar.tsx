@@ -14,6 +14,7 @@ import {
   CreditCard, 
   FileBarChart2,
   History,
+  ShieldCheck,
   X,
   PanelLeftClose,
   PanelLeftOpen
@@ -72,6 +73,12 @@ export function Sidebar({ isMobileOpen, onCloseMobile }: SidebarProps) {
         { id: 'termin', label: 'Termin Invoicing', icon: CreditCard, badge: pendingTerminCount > 0 ? `${pendingTerminCount}` : null },
         { id: 'laporan', label: 'Laporan P&L Proyek', icon: FileBarChart2, badge: null },
         { id: 'activity-log', label: 'Riwayat Aktivitas', icon: History, badge: null },
+      ],
+    },
+    {
+      title: 'OTORISASI & HAK AKSES',
+      items: [
+        { id: 'users', label: 'User Management', icon: ShieldCheck, badge: 'Owner' },
       ],
     },
   ];

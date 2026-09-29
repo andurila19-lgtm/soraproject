@@ -14,8 +14,8 @@ export function AddExpenseModal() {
   const [category, setCategory] = useState<CostExpense['category']>('Material');
   const [description, setDescription] = useState('');
   const [vendorOrRecipient, setVendorOrRecipient] = useState('');
-  const [budgetAllocated, setBudgetAllocated] = useState<number>(5000000);
-  const [actualAmount, setActualAmount] = useState<number>(4800000);
+  const [budgetAllocated, setBudgetAllocated] = useState<number>(0);
+  const [actualAmount, setActualAmount] = useState<number>(0);
   const [paymentMethod, setPaymentMethod] = useState<CostExpense['paymentMethod']>('Transfer Bank');
   const [receiptNo, setReceiptNo] = useState(`INV/SRA/${Date.now().toString().slice(-6)}`);
 
@@ -26,7 +26,7 @@ export function AddExpenseModal() {
     if (!description || !vendorOrRecipient) return;
 
     const prj = projects.find(p => p.id === projectId);
-    const projectName = prj ? prj.name : 'Proyek Sora';
+    const projectName = prj ? prj.name : projects[0]?.name || 'Fit-out Proyek B2B';
 
     addExpense({
       projectId,
@@ -79,15 +79,23 @@ export function AddExpenseModal() {
         <div className="flex-1 min-h-0 overflow-y-auto modal-scroll p-4 sm:p-6 space-y-3 sm:space-y-4 text-xs overscroll-contain touch-pan-y">
           <div>
             <label className="block text-[#1C2434] font-semibold mb-1">Pilih Proyek Terkait</label>
-            <select
-              value={projectId}
-              onChange={(e) => setProjectId(e.target.value)}
-              className="tail-input min-h-[38px]"
-            >
-              {projects.map((p) => (
-                <option key={p.id} value={p.id}>{p.code} - {p.name}</option>
-              ))}
-            </select>
+            {projects.length === 0 ? (
+              <p className="text-xs text-[#D34053] bg-red-50 p-2 rounded border border-red-200">
+                Belum ada proyek terdaftar. Harap buat proyek baru terlebih dahulu sebelum mencatat pengeluaran.
+              </p>
+            ) : (
+              <select
+                value={projectId}
+                onChange={(e) => setProjectId(e.target.value)}
+                className="tail-input min-h-[38px]"
+                required
+              >
+                <option value="">-- Pilih Proyek --</option>
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id}>{p.code} - {p.name}</option>
+                ))}
+              </select>
+            )}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

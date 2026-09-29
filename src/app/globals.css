@@ -232,21 +232,23 @@ body {
 }
 
 /* TailAdmin Inputs */
+.input-tail,
 .tail-input {
   width: 100%;
-  background-color: transparent;
-  border: 1px solid #E2E8F0;
-  border-radius: 4px;
-  padding: 8px 12px;
-  font-size: 13px;
+  background-color: #FFFFFF;
+  border: 1px solid #CBD5E1;
+  border-radius: 6px;
+  padding: 9px 14px;
+  font-size: 13.5px;
   color: #1C2434;
   outline: none;
   transition: all 0.2s ease-in-out;
 }
 
+.input-tail:focus,
 .tail-input:focus {
   border-color: #3C50E0;
-  box-shadow: 0 0 0 3px rgba(60, 80, 224, 0.1);
+  box-shadow: 0 0 0 3px rgba(60, 80, 224, 0.15);
 }
 
 /* TailAdmin Buttons */

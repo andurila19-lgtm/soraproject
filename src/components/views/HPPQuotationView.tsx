@@ -240,8 +240,27 @@ export function HPPQuotationView() {
               </tr>
             </thead>
             <tbody>
-              {filteredItems.map((item) => (
-                <tr key={item.id}>
+              {filteredItems.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="px-6 py-12 text-center">
+                    <div className="flex flex-col items-center justify-center">
+                      <Calculator className="w-10 h-10 text-[#94A3B8] mb-2" />
+                      <p className="text-sm font-semibold text-[#1C2434]">Belum Ada Rincian BOQ & HPP</p>
+                      <p className="text-xs text-[#64748B] mt-1 max-w-sm">
+                        Sistem dalam keadaan bersih (0 item). Mulai susun estimasi RAB dan HPP dengan menambahkan item BOQ pekerjaan.
+                      </p>
+                      <button
+                        onClick={() => setIsAddItemOpen(true)}
+                        className="mt-3.5 btn-tail-primary text-xs py-2 px-3.5"
+                      >
+                        + Tambah Item BOQ
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filteredItems.map((item) => (
+                  <tr key={item.id}>
                   <td>
                     <span className="badge-tail badge-tail-primary text-xs">
                       {item.category}
@@ -265,8 +284,9 @@ export function HPPQuotationView() {
                     {formatRupiah(item.quotationPrice)}
                   </td>
                 </tr>
-              ))}
-            </tbody>
+              ))
+            )}
+          </tbody>
             <tfoot className="bg-[#F7F9FC] font-bold border-t border-[#E2E8F0]">
               <tr>
                 <td colSpan={5} className="text-right uppercase text-xs text-[#1C2434]">
@@ -311,8 +331,8 @@ function AddBOQItemModal({ onClose }: { onClose: () => void }) {
   const [itemDescription, setItemDescription] = useState('');
   const [specification, setSpecification] = useState('');
   const [unit, setUnit] = useState('Lembar');
-  const [volume, setVolume] = useState<number>(10);
-  const [unitPriceHPP, setUnitPriceHPP] = useState<number>(250000);
+  const [volume, setVolume] = useState<number>(1);
+  const [unitPriceHPP, setUnitPriceHPP] = useState<number>(0);
   const [markupPercent, setMarkupPercent] = useState<number>(30);
 
   const handleSubmit = (e: React.FormEvent) => {

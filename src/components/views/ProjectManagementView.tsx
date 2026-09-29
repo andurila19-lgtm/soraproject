@@ -157,7 +157,7 @@ export function ProjectManagementView() {
                 Master Portofolio Proyek Interior Sora
               </h3>
               <p className="text-xs text-[#64748B] mt-0.5">
-                Total {filteredProjects.length} proyek aktif dalam database
+                Total {filteredProjects.length} proyek aktif terdaftar
               </p>
             </div>
             <span className="badge-tail badge-tail-primary text-xs">
@@ -192,74 +192,94 @@ export function ProjectManagementView() {
                 </tr>
               </thead>
               <tbody>
-                {filteredProjects.map((p) => (
-                  <tr key={p.id}>
-                    <td className="font-mono font-bold text-[#3C50E0] text-xs">
-                      {p.code}
-                    </td>
-                    <td>
-                      <div className="font-bold text-[#1C2434] hover:text-[#3C50E0] cursor-pointer" onClick={() => setSelectedProjectDetail(p)}>
-                        {p.name}
+                {filteredProjects.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="px-6 py-12 text-center">
+                      <div className="flex flex-col items-center justify-center">
+                        <FolderKanban className="w-10 h-10 text-[#94A3B8] mb-2" />
+                        <p className="text-sm font-semibold text-[#1C2434]">Belum Ada Proyek Aktif</p>
+                        <p className="text-xs text-[#64748B] mt-1 max-w-sm">
+                          Sistem dalam keadaan bersih (0 proyek). Buat proyek fit-out pertama Anda untuk memulai manajemen proyek.
+                        </p>
+                        <button
+                          onClick={() => setIsCreateProjectOpen(true)}
+                          className="mt-3.5 btn-tail-primary text-xs py-2 px-3.5"
+                        >
+                          + Tambah Proyek Baru
+                        </button>
                       </div>
-                      <div className="text-xs text-[#64748B]">📍 {p.location}</div>
-                    </td>
-                    <td>
-                      <div className="font-bold text-[#1C2434]">{p.partnerName}</div>
-                      <div className="text-xs text-[#64748B]">{p.endUser}</div>
-                    </td>
-                    {(role === 'Owner' || role === 'Admin Keuangan') ? (
-                      <>
-                        <td className="text-right font-mono font-bold text-[#1C2434]">
-                          {formatRupiah(p.contractValue)}
-                        </td>
-                        <td className="text-right font-mono text-[#64748B]">
-                          {formatRupiah(p.hppBudget)}
-                        </td>
-                        <td className="text-right font-mono font-bold text-[#1C2434]">
-                          {formatRupiah(p.actualCost)}
-                        </td>
-                      </>
-                    ) : (
-                      <>
-                        <td className="text-xs text-[#64748B]">
-                          {formatDateIndo(p.startDate)}
-                        </td>
-                        <td className="text-xs font-semibold text-[#1C2434]">
-                          {formatDateIndo(p.targetCompletion)}
-                        </td>
-                        <td className="text-xs text-[#64748B]">
-                          {p.picProduksi}
-                        </td>
-                      </>
-                    )}
-                    <td>
-                      <div className="flex items-center gap-2 justify-center">
-                        <div className="w-16 bg-[#E2E8F0] h-2 rounded-full overflow-hidden">
-                          <div className="bg-[#3C50E0] h-full rounded-full" style={{ width: `${p.progress}%` }} />
-                        </div>
-                        <span className="font-mono font-bold text-xs text-[#1C2434]">{p.progress}%</span>
-                      </div>
-                    </td>
-                    <td className="text-center">
-                      <span className={`badge-tail ${
-                        p.health === 'On Track' ? 'badge-tail-success' : 'badge-tail-warning'
-                      }`}>
-                        {p.status}
-                      </span>
-                    </td>
-                    <td className="text-xs text-[#1C2434] font-medium">
-                      {p.picLapangan.split(' ')[0]}
-                    </td>
-                    <td className="text-center">
-                      <button
-                        onClick={() => setSelectedProjectDetail(p)}
-                        className="btn-tail-secondary text-xs py-1 px-3"
-                      >
-                        Detail
-                      </button>
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  filteredProjects.map((p) => (
+                    <tr key={p.id}>
+                      <td className="font-mono font-bold text-[#3C50E0] text-xs">
+                        {p.code}
+                      </td>
+                      <td>
+                        <div className="font-bold text-[#1C2434] hover:text-[#3C50E0] cursor-pointer" onClick={() => setSelectedProjectDetail(p)}>
+                          {p.name}
+                        </div>
+                        <div className="text-xs text-[#64748B]">📍 {p.location}</div>
+                      </td>
+                      <td>
+                        <div className="font-bold text-[#1C2434]">{p.partnerName}</div>
+                        <div className="text-xs text-[#64748B]">{p.endUser}</div>
+                      </td>
+                      {(role === 'Owner' || role === 'Admin Keuangan') ? (
+                        <>
+                          <td className="text-right font-mono font-bold text-[#1C2434]">
+                            {formatRupiah(p.contractValue)}
+                          </td>
+                          <td className="text-right font-mono text-[#64748B]">
+                            {formatRupiah(p.hppBudget)}
+                          </td>
+                          <td className="text-right font-mono font-bold text-[#1C2434]">
+                            {formatRupiah(p.actualCost)}
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="text-xs text-[#64748B]">
+                            {formatDateIndo(p.startDate)}
+                          </td>
+                          <td className="text-xs font-semibold text-[#1C2434]">
+                            {formatDateIndo(p.targetCompletion)}
+                          </td>
+                          <td className="text-xs text-[#64748B]">
+                            {p.picProduksi}
+                          </td>
+                        </>
+                      )}
+                      <td>
+                        <div className="flex items-center gap-2 justify-center">
+                          <div className="w-16 bg-[#E2E8F0] h-2 rounded-full overflow-hidden">
+                            <div className="bg-[#3C50E0] h-full rounded-full" style={{ width: `${p.progress}%` }} />
+                          </div>
+                          <span className="font-mono font-bold text-xs text-[#1C2434]">{p.progress}%</span>
+                        </div>
+                      </td>
+                      <td className="text-center">
+                        <span className={`badge-tail ${
+                          p.health === 'On Track' ? 'badge-tail-success' : 'badge-tail-warning'
+                        }`}>
+                          {p.status}
+                        </span>
+                      </td>
+                      <td className="text-xs text-[#1C2434] font-medium">
+                        {p.picLapangan.split(' ')[0]}
+                      </td>
+                      <td className="text-center">
+                        <button
+                          onClick={() => setSelectedProjectDetail(p)}
+                          className="btn-tail-secondary text-xs py-1 px-3"
+                        >
+                          Detail
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </TableScrollWrapper>
@@ -275,7 +295,22 @@ export function ProjectManagementView() {
 
       {/* Grid Mode */}
       {viewMode === 'grid' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        filteredProjects.length === 0 ? (
+          <div className="tail-card p-12 text-center">
+            <FolderKanban className="w-12 h-12 text-[#94A3B8] mx-auto mb-3" />
+            <h3 className="text-base font-bold text-[#1C2434]">Belum Ada Proyek Aktif</h3>
+            <p className="text-xs text-[#64748B] mt-1 max-w-sm mx-auto">
+              Sistem dalam keadaan bersih (0 proyek). Buat proyek fit-out pertama Anda untuk melihat ringkasan visual.
+            </p>
+            <button
+              onClick={() => setIsCreateProjectOpen(true)}
+              className="mt-4 tail-btn tail-btn-primary text-xs py-2 px-4 mx-auto"
+            >
+              + Tambah Proyek Baru
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {filteredProjects.map((p) => (
             <div
               key={p.id}
@@ -331,7 +366,7 @@ export function ProjectManagementView() {
             </div>
           ))}
         </div>
-      )}
+      ))}
 
       {/* Kanban Mode */}
       {viewMode === 'kanban' && (

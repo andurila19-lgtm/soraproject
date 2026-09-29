@@ -38,6 +38,8 @@ const entityIcons: Record<ActivityLog['entityType'], React.ElementType> = {
   partner: Users2,
   progress: TrendingUp,
   boq: FileText,
+  addendum: FileText,
+  opname: CheckCircle2,
 };
 
 const entityColors: Record<ActivityLog['entityType'], string> = {
@@ -48,6 +50,8 @@ const entityColors: Record<ActivityLog['entityType'], string> = {
   partner: 'text-[#64748B] bg-[#64748B]/10',
   progress: 'text-[#10B981] bg-[#10B981]/10',
   boq: 'text-[#F0950C] bg-[#F0950C]/10',
+  addendum: 'text-[#3C50E0] bg-[#3C50E0]/10',
+  opname: 'text-[#10B981] bg-[#10B981]/10',
 };
 
 export function ActivityLogView() {

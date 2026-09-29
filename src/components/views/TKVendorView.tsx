@@ -181,8 +181,21 @@ export function TKVendorView() {
                 </tr>
               </thead>
               <tbody>
-                {filteredWorkers.map((w) => (
-                  <tr key={w.id}>
+                {filteredWorkers.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="px-6 py-12 text-center">
+                      <div className="flex flex-col items-center justify-center">
+                        <HardHat className="w-10 h-10 text-[#94A3B8] mb-2" />
+                        <p className="text-sm font-semibold text-[#1C2434]">Belum Ada Tenaga Kerja Terdaftar</p>
+                        <p className="text-xs text-[#64748B] mt-1 max-w-sm">
+                          Sistem dalam keadaan bersih (0 personil). Roster mandor, tukang kayu, dan tim MEP akan tampil di sini.
+                        </p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredWorkers.map((w) => (
+                    <tr key={w.id}>
                     <td className="font-bold text-[#1C2434]">{w.name}</td>
                     <td>
                       <span className="badge-tail badge-tail-primary text-xs">{w.specialty}</span>
@@ -214,8 +227,9 @@ export function TKVendorView() {
                       </button>
                     </td>
                   </tr>
-                ))}
-              </tbody>
+                ))
+              )}
+            </tbody>
             </table>
           </TableScrollWrapper>
 
@@ -259,8 +273,21 @@ export function TKVendorView() {
                 </tr>
               </thead>
               <tbody>
-                {filteredVendors.map((v) => (
-                  <tr key={v.id}>
+                {filteredVendors.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="px-6 py-12 text-center">
+                      <div className="flex flex-col items-center justify-center">
+                        <Truck className="w-10 h-10 text-[#94A3B8] mb-2" />
+                        <p className="text-sm font-semibold text-[#1C2434]">Belum Ada Vendor Rekanan Terdaftar</p>
+                        <p className="text-xs text-[#64748B] mt-1 max-w-sm">
+                          Sistem dalam keadaan bersih (0 vendor). Supplier HPL, kaca, marmer, dan fitting hardware akan tampil di sini.
+                        </p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  filteredVendors.map((v) => (
+                    <tr key={v.id}>
                     <td className="font-bold text-[#1C2434]">{v.name}</td>
                     <td>
                       <span className="badge-tail badge-tail-warning text-xs">{v.category}</span>
@@ -280,8 +307,9 @@ export function TKVendorView() {
                       ⭐ {v.rating} / 5.0
                     </td>
                   </tr>
-                ))}
-              </tbody>
+                ))
+              )}
+            </tbody>
             </table>
           </TableScrollWrapper>
 

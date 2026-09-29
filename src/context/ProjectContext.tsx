@@ -1,6 +1,7 @@
 'use client';
 
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
 import { 
   UserRole, 
   Partner, 
@@ -13,7 +14,9 @@ import {
   PaymentTermin, 
   SitePhoto, 
   DailyReport,
-  ActivityLog 
+  ActivityLog,
+  OpnameItem,
+  ProjectAddendum 
 } from '@/lib/types';
 import { 
   initialPartners, 
@@ -26,9 +29,72 @@ import {
   initialTermins, 
   initialSitePhotos, 
   initialDailyReports,
-  initialActivityLogs 
+  initialActivityLogs,
+  initialOpnames,
+  initialAddendums
 } from '@/lib/mockData';
 import { isTabAllowed } from '@/lib/rbac';
+
+export interface UserProfile {
+  name: string;
+  role: UserRole;
+  email: string;
+  avatar: string;
+  title: string;
+}
+
+export interface TeamMember {
+  id: string;
+  fullName: string;
+  email: string;
+  role: UserRole;
+  phone: string;
+  createdAt: string;
+  status: 'Aktif' | 'Nonaktif';
+}
+
+export const INITIAL_TEAM_MEMBERS: TeamMember[] = [
+  {
+    id: 'usr-owner-1',
+    fullName: 'Ir. Robith Izzudin',
+    email: 'robith.owner@soraproject.com',
+    role: 'Owner',
+    phone: '0811-9876-5432',
+    createdAt: new Date().toISOString().split('T')[0],
+    status: 'Aktif',
+  },
+];
+
+export const USERS_BY_ROLE: Record<UserRole, UserProfile> = {
+  'Owner': {
+    name: 'Ir. Robith Izzudin',
+    role: 'Owner',
+    email: 'robith.owner@soraproject.com',
+    avatar: 'RI',
+    title: 'Owner & Direktur Utama',
+  },
+  'Kepala Produksi': {
+    name: 'Kepala Produksi',
+    role: 'Kepala Produksi',
+    email: '',
+    avatar: 'KP',
+    title: 'Kepala Produksi',
+  },
+  'Admin Keuangan': {
+    name: 'Admin Keuangan',
+    role: 'Admin Keuangan',
+    email: '',
+    avatar: 'AK',
+    title: 'Admin Keuangan',
+  },
+  'Pengawas Lapangan': {
+    name: 'Pengawas Lapangan',
+    role: 'Pengawas Lapangan',
+    email: '',
+    avatar: 'PL',
+    title: 'Pengawas Lapangan',
+  },
+};
 
 interface NotificationItem {
   id: string;
@@ -40,6 +106,11 @@ interface NotificationItem {
 }
 
 interface ProjectContextType {
+  isAuthenticated: boolean;
+  isAuthLoaded: boolean;
+  currentUser: UserProfile;
+  login: (role?: UserRole, email?: string) => void;
+  logout: () => void;
   role: UserRole;
   setRole: (role: UserRole) => void;
   selectedProjectId: string; // 'all' or specific ID
@@ -67,6 +138,8 @@ interface ProjectContextType {
   dailyReports: DailyReport[];
   notifications: NotificationItem[];
   activityLogs: ActivityLog[];
+  opnames: OpnameItem[];
+  addendums: ProjectAddendum[];
 
   // Mutators
   addPartner: (partner: Omit<Partner, 'id' | 'totalProjects' | 'activeProjects' | 'totalContractValue'>) => void;
@@ -80,7 +153,17 @@ interface ProjectContextType {
   updateTerminStatus: (id: string, status: PaymentTermin['status']) => void;
   addSitePhoto: (photo: Omit<SitePhoto, 'id' | 'date'>) => void;
   addDailyReport: (report: Omit<DailyReport, 'id' | 'date'>) => void;
+  addOpnameItem: (item: Omit<OpnameItem, 'id' | 'adjustmentValue'>) => void;
+  updateOpnameStatus: (id: string, status: OpnameItem['status']) => void;
+  addProjectAddendum: (addendum: Omit<ProjectAddendum, 'id' | 'addendumNumber'>) => void;
+  updateAddendumStatus: (id: string, status: ProjectAddendum['status']) => void;
   markNotificationsAsRead: () => void;
+
+  // User Management (Owner Only)
+  teamMembers: TeamMember[];
+  addTeamMember: (member: { fullName: string; email: string; role: UserRole; phone: string; password?: string }) => Promise<{ success: boolean; message?: string }>;
+  deleteTeamMember: (id: string) => void;
+  updateTeamMemberRole: (id: string, newRole: UserRole) => void;
 
   // Selected project for detail view
   selectedProjectDetail: Project | null;
@@ -100,7 +183,37 @@ interface ProjectContextType {
 const ProjectContext = createContext<ProjectContextType | undefined>(undefined);
 
 export function ProjectProvider({ children }: { children: React.ReactNode }) {
+  const [isAuthLoaded, setIsAuthLoaded] = useState<boolean>(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [role, setRoleState] = useState<UserRole>('Owner');
+
+  const currentUser = USERS_BY_ROLE[role] || USERS_BY_ROLE['Owner'];
+
+  const login = (chosenRole: UserRole = 'Owner') => {
+    setRoleState(chosenRole);
+    setIsAuthenticated(true);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sora_auth', 'true');
+      localStorage.setItem('sora_role', chosenRole);
+    }
+    showToast(`Selamat datang, ${USERS_BY_ROLE[chosenRole].name}. Anda berhasil masuk sebagai ${chosenRole}.`);
+  };
+
+  const logout = async () => {
+    setIsAuthenticated(false);
+    if (supabase) {
+      try {
+        await supabase.auth.signOut();
+      } catch (e) {}
+    }
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('sora_auth');
+      localStorage.removeItem('sora_role');
+      localStorage.removeItem('sora_email');
+    }
+    showToast('Sesi kerja berakhir. Anda telah keluar dari sistem.');
+  };
+
   const [selectedProjectId, setSelectedProjectId] = useState<string>('all');
   const [activeTab, setActiveTabState] = useState<string>('dashboard');
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -117,6 +230,9 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
 
   const setRole = (newRole: UserRole) => {
     setRoleState(newRole);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sora_role', newRole);
+    }
     if (!isTabAllowed(newRole, activeTab)) {
       setActiveTabState('dashboard');
     }
@@ -142,6 +258,70 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
   const [sitePhotos, setSitePhotos] = useState<SitePhoto[]>(initialSitePhotos);
   const [dailyReports, setDailyReports] = useState<DailyReport[]>(initialDailyReports);
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>(initialActivityLogs);
+  const [addendums, setAddendums] = useState<ProjectAddendum[]>(initialAddendums);
+  const [opnames, setOpnames] = useState<OpnameItem[]>(initialOpnames);
+
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>(INITIAL_TEAM_MEMBERS);
+
+  // Hydrate auth session & team members safely from localStorage on client mount (prevents SSR hydration mismatch)
+  useEffect(() => {
+    async function initAuth() {
+      try {
+        if (typeof window !== 'undefined') {
+          if (supabase) {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user) {
+              setIsAuthenticated(true);
+              const metaRole = session.user.user_metadata?.role as UserRole;
+              if (metaRole && ['Owner', 'Kepala Produksi', 'Admin Keuangan', 'Pengawas Lapangan'].includes(metaRole)) {
+                setRoleState(metaRole);
+              }
+            } else {
+              // Sesi kosong — paksa status belum login
+              setIsAuthenticated(false);
+              localStorage.removeItem('sora_auth');
+              localStorage.removeItem('sora_role');
+            }
+          } else {
+            setIsAuthenticated(false);
+          }
+        }
+      } catch (e) {
+        setIsAuthenticated(false);
+      } finally {
+        setIsAuthLoaded(true);
+      }
+    }
+    initAuth();
+  }, []);
+
+  // Sinkronisasi data profiles dari Supabase PostgreSQL
+  useEffect(() => {
+    async function syncProfiles() {
+      try {
+        if (!supabase) return;
+        const { data, error } = await supabase.from('profiles').select('*');
+        if (!error && data && data.length > 0) {
+          const mapped: TeamMember[] = data.map((p: any) => ({
+            id: p.id,
+            fullName: p.full_name || p.email,
+            email: p.email,
+            role: p.role,
+            phone: p.phone || '-',
+            createdAt: p.created_at ? p.created_at.split('T')[0] : '2026-08-01',
+            status: 'Aktif',
+          }));
+          setTeamMembers(mapped);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('sora_team_members', JSON.stringify(mapped));
+          }
+        }
+      } catch (err) {
+        console.warn('Sync profiles from Supabase notice:', err);
+      }
+    }
+    syncProfiles();
+  }, []);
 
   const [selectedProjectDetail, setSelectedProjectDetail] = useState<Project | null>(null);
 
@@ -150,32 +330,7 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
   const [isCreatePOOpen, setIsCreatePOOpen] = useState(false);
   const [isQuotationPreviewOpen, setIsQuotationPreviewOpen] = useState(false);
 
-  const [notifications, setNotifications] = useState<NotificationItem[]>([
-    {
-      id: 'nt-1',
-      title: 'Termin 2 SCBD Jatuh Tempo',
-      message: 'Invoice Termin 2 (Rp 435.000.000) jatuh tempo dalam 3 hari ke PT Nexus Finansial Digital.',
-      time: '10 menit lalu',
-      type: 'warning',
-      read: false,
-    },
-    {
-      id: 'nt-2',
-      title: 'PO Bahan Menunggu Approval',
-      message: 'Tambahan slab Marmer Carrara Rp 7.500.000 diajukan oleh Hendra (Tanamera Senopati).',
-      time: '1 jam lalu',
-      type: 'info',
-      read: false,
-    },
-    {
-      id: 'nt-3',
-      title: 'Peringatan Overbudget HPL',
-      message: 'Pengeluaran Taco Walnut SCBD melebihi estimasi HPP sebesar Rp 225.000 karena revisi gambar.',
-      time: '3 jam lalu',
-      type: 'danger',
-      read: false,
-    },
-  ]);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
 
   // ============ Activity Log Helper ============
   const logActivity = (
@@ -186,9 +341,9 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     details: string,
   ) => {
     const roleNames: Record<UserRole, string> = {
-      'Owner': 'Owner',
+      'Owner': 'Ir. Robith (Owner)',
       'Kepala Produksi': 'Budi Santoso',
-      'Admin Keuangan': 'Admin Keuangan',
+      'Admin Keuangan': 'Siti Rahmawati',
       'Pengawas Lapangan': 'Rian Pratama',
     };
     const newLog: ActivityLog = {
@@ -440,13 +595,204 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     showToast(`Laporan Harian Lapangan berhasil disimpan.`);
   };
 
+  const addOpnameItem = (itemData: Omit<OpnameItem, 'id' | 'adjustmentValue'>) => {
+    const adjustmentValue = itemData.differenceVolume * itemData.unitPrice;
+    const newOpn: OpnameItem = {
+      ...itemData,
+      id: `opn-${Date.now()}`,
+      adjustmentValue,
+    };
+    setOpnames(prev => [newOpn, ...prev]);
+    logActivity(
+      'Catat hasil joint opname',
+      'opname',
+      newOpn.id,
+      itemData.itemDescription,
+      `Opname "${itemData.itemDescription}" volume ${itemData.initialVolume} -> ${itemData.actualVolume} ${itemData.unit}. Nilai penyesuaian: Rp ${adjustmentValue.toLocaleString('id-ID')}.`
+    );
+    showToast(`Hasil joint opname "${itemData.itemDescription}" berhasil dicatat.`);
+  };
+
+  const updateOpnameStatus = (id: string, status: OpnameItem['status']) => {
+    let itemDesc = '';
+    setOpnames(prev => prev.map(o => {
+      if (o.id === id) {
+        itemDesc = o.itemDescription;
+        return { ...o, status };
+      }
+      return o;
+    }));
+    logActivity(`Update status opname ke ${status}`, 'opname', id, itemDesc, `Opname "${itemDesc}" status diubah ke "${status}".`);
+    showToast(`Status opname diperbarui menjadi "${status}".`);
+  };
+
+  const addProjectAddendum = (addData: Omit<ProjectAddendum, 'id' | 'addendumNumber'>) => {
+    const prj = projects.find(p => p.id === addData.projectId);
+    const code = prj ? prj.code : 'SRA-2026';
+    const addCount = addendums.filter(a => a.projectId === addData.projectId).length + 1;
+    const addNum = `ADD/${code}/${String(addCount).padStart(2, '0')}`;
+    const newAdd: ProjectAddendum = {
+      ...addData,
+      id: `add-${Date.now()}`,
+      addendumNumber: addNum,
+    };
+    setAddendums(prev => [newAdd, ...prev]);
+    logActivity(
+      'Terbitkan addendum proyek',
+      'addendum',
+      newAdd.id,
+      addData.title,
+      `${addNum} senilai Rp ${addData.amount.toLocaleString('id-ID')} (${addData.type}). Status: ${addData.status}.`
+    );
+    showToast(`Addendum "${addNum}" berhasil diterbitkan. Status: ${addData.status}.`);
+  };
+
+  const updateAddendumStatus = (id: string, status: ProjectAddendum['status']) => {
+    let addNum = '';
+    let addTitle = '';
+    let addAmount = 0;
+    let addPrjId = '';
+    setAddendums(prev => prev.map(a => {
+      if (a.id === id) {
+        addNum = a.addendumNumber;
+        addTitle = a.title;
+        addAmount = a.amount;
+        addPrjId = a.projectId;
+        return { ...a, status };
+      }
+      return a;
+    }));
+
+    // If addendum is approved by client, update project contractValue
+    if (status === 'Disetujui Klien' && addPrjId && addAmount > 0) {
+      setProjects(prev => prev.map(p => {
+        if (p.id === addPrjId) {
+          return {
+            ...p,
+            contractValue: p.contractValue + addAmount,
+          };
+        }
+        return p;
+      }));
+    }
+
+    logActivity(`Approval addendum: ${status}`, 'addendum', id, addTitle, `${addNum} disetujui klien. Nilai kontrak deal disesuaikan.`);
+    showToast(`Addendum "${addNum}" ${status === 'Disetujui Klien' ? 'disetujui oleh Klien' : 'diperbarui'}.`);
+  };
+
   const markNotificationsAsRead = () => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  };
+
+  // User Management (Owner Only)
+  const addTeamMember = async (member: { fullName: string; email: string; role: UserRole; phone: string; password?: string }): Promise<{ success: boolean; message?: string }> => {
+    try {
+      let authUserId = `usr-${Date.now()}`;
+      if (supabase && member.password) {
+        const { data, error } = await supabase.auth.signUp({
+          email: member.email,
+          password: member.password,
+          options: {
+            data: {
+              full_name: member.fullName,
+              role: member.role,
+              phone: member.phone,
+            }
+          }
+        });
+        if (error) {
+          console.warn('Supabase signUp note:', error.message);
+        } else if (data?.user?.id) {
+          authUserId = data.user.id;
+        }
+
+        // Sinkronisasi record profiles
+        try {
+          await supabase.from('profiles').upsert({
+            id: authUserId,
+            email: member.email,
+            full_name: member.fullName,
+            role: member.role,
+            phone: member.phone,
+          });
+        } catch (profileErr) {
+          console.warn('Profile upsert note:', profileErr);
+        }
+      }
+
+      const newMember: TeamMember = {
+        id: authUserId,
+        fullName: member.fullName,
+        email: member.email,
+        role: member.role,
+        phone: member.phone,
+        createdAt: new Date().toISOString().split('T')[0],
+        status: 'Aktif',
+      };
+
+      setTeamMembers(prev => {
+        const updated = [newMember, ...prev.filter(m => m.email !== member.email)];
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('sora_team_members', JSON.stringify(updated));
+        }
+        return updated;
+      });
+
+      logActivity(
+        'Tambah Akun Tim',
+        'project',
+        authUserId,
+        member.fullName,
+        `Akun tim ${member.fullName} (${member.role}) berhasil didaftarkan dengan email ${member.email}.`
+      );
+      showToast(`Akun untuk ${member.fullName} (${member.role}) berhasil dibuat!`);
+      return { success: true };
+    } catch (err: any) {
+      console.error('Error creating team member:', err);
+      return { success: false, message: err?.message || 'Gagal membuat akun tim' };
+    }
+  };
+
+  const deleteTeamMember = async (id: string) => {
+    setTeamMembers(prev => {
+      const updated = prev.filter(m => m.id !== id);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('sora_team_members', JSON.stringify(updated));
+      }
+      return updated;
+    });
+    if (supabase) {
+      try {
+        await supabase.from('profiles').delete().eq('id', id);
+      } catch (e) {}
+    }
+    showToast('Akun tim berhasil dinonaktifkan/dihapus.');
+  };
+
+  const updateTeamMemberRole = async (id: string, newRole: UserRole) => {
+    setTeamMembers(prev => {
+      const updated = prev.map(m => m.id === id ? { ...m, role: newRole } : m);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('sora_team_members', JSON.stringify(updated));
+      }
+      return updated;
+    });
+    if (supabase) {
+      try {
+        await supabase.from('profiles').update({ role: newRole }).eq('id', id);
+      } catch (e) {}
+    }
+    showToast(`Role akun berhasil diubah menjadi ${newRole}.`);
   };
 
   return (
     <ProjectContext.Provider
       value={{
+        isAuthenticated,
+        isAuthLoaded,
+        currentUser,
+        login,
+        logout,
         role,
         setRole,
         selectedProjectId,
@@ -472,6 +818,12 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
         dailyReports,
         notifications,
         activityLogs,
+        opnames,
+        addendums,
+        teamMembers,
+        addTeamMember,
+        deleteTeamMember,
+        updateTeamMemberRole,
         addPartner,
         addProject,
         updateProjectProgress,
@@ -483,6 +835,10 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
         updateTerminStatus,
         addSitePhoto,
         addDailyReport,
+        addOpnameItem,
+        updateOpnameStatus,
+        addProjectAddendum,
+        updateAddendumStatus,
         markNotificationsAsRead,
         selectedProjectDetail,
         setSelectedProjectDetail,

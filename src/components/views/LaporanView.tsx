@@ -20,16 +20,20 @@ export function LaporanView() {
   const totalContract = projects.reduce((acc, p) => acc + p.contractValue, 0);
   const totalActualCost = projects.reduce((acc, p) => acc + p.actualCost, 0);
   const totalGrossProfit = totalContract - totalActualCost;
-  const overallMargin = Math.round((totalGrossProfit / (totalContract || 1)) * 100);
+  const overallMargin = totalContract > 0 ? Math.round((totalGrossProfit / totalContract) * 100) : 0;
 
   const totalCashIn = termins.filter(t => t.status === 'Lunas').reduce((acc, t) => acc + t.amount, 0);
   const netCashFlow = totalCashIn - totalActualCost;
 
   const handleExportCSV = () => {
+    if (projects.length === 0) {
+      showToast('Belum ada data proyek untuk diekspor ke CSV/Excel.');
+      return;
+    }
     const headers = "Kode,Nama Proyek,Klien / Partner,Nilai Kontrak,HPP Budget,Biaya Aktual,Laba Kotor,Margin %,Progress,Status\n";
     const rows = projects.map(p => {
       const profit = p.contractValue - p.actualCost;
-      const margin = Math.round((profit / p.contractValue) * 100);
+      const margin = p.contractValue > 0 ? Math.round((profit / p.contractValue) * 100) : 0;
       return `"${p.code}","${p.name}","${p.partnerName}",${p.contractValue},${p.hppBudget},${p.actualCost},${profit},${margin}%,${p.progress}%,"${p.status}"`;
     }).join("\n");
 
@@ -191,10 +195,23 @@ export function LaporanView() {
               </tr>
             </thead>
             <tbody>
-              {projects.map((p) => {
-                const profit = p.contractValue - p.actualCost;
-                const margin = Math.round((profit / (p.contractValue || 1)) * 100);
-                return (
+              {projects.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="px-6 py-12 text-center">
+                    <div className="flex flex-col items-center justify-center">
+                      <TrendingUp className="w-10 h-10 text-[#94A3B8] mb-2" />
+                      <p className="text-sm font-semibold text-[#1C2434]">Belum Ada Data Proyek untuk Laporan P&L</p>
+                      <p className="text-xs text-[#64748B] mt-1 max-w-sm">
+                        Laporan audit laba-rugi, perbandingan HPP, dan realisasi margin akan otomatis dihitung saat proyek fit-out aktif.
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                projects.map((p) => {
+                  const profit = p.contractValue - p.actualCost;
+                  const margin = p.contractValue > 0 ? Math.round((profit / p.contractValue) * 100) : 0;
+                  return (
                   <tr key={p.id}>
                     <td className="font-mono font-bold text-[#3C50E0] text-xs">{p.code}</td>
                     <td className="font-bold text-[#1C2434]">{p.name}</td>
@@ -213,8 +230,9 @@ export function LaporanView() {
                     </td>
                   </tr>
                 );
-              })}
-            </tbody>
+              })
+            )}
+          </tbody>
             <tfoot className="bg-[#F7F9FC] font-bold border-t border-[#E2E8F0]">
               <tr>
                 <td colSpan={3} className="text-right uppercase text-xs text-[#1C2434]">

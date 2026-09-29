@@ -213,8 +213,27 @@ export function ProcurementView() {
               </tr>
             </thead>
             <tbody>
-              {filteredPOs.map((po) => (
-                <tr key={po.id}>
+              {filteredPOs.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="px-6 py-12 text-center">
+                    <div className="flex flex-col items-center justify-center">
+                      <ShoppingBag className="w-10 h-10 text-[#94A3B8] mb-2" />
+                      <p className="text-sm font-semibold text-[#1C2434]">Belum Ada Purchase Order (PO)</p>
+                      <p className="text-xs text-[#64748B] mt-1 max-w-sm">
+                        Sistem dalam keadaan bersih (0 PO). Mulai pengadaan bahan proyek dengan membuat PO baru ke supplier.
+                      </p>
+                      <button
+                        onClick={() => setIsCreatePOOpen(true)}
+                        className="mt-3.5 btn-tail-primary text-xs py-2 px-3.5"
+                      >
+                        + Buat PO Bahan Baru
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filteredPOs.map((po) => (
+                  <tr key={po.id}>
                   <td className="font-mono font-bold text-[#3C50E0] text-xs">
                     {po.poNumber}
                   </td>
@@ -280,8 +299,9 @@ export function ProcurementView() {
                     </div>
                   </td>
                 </tr>
-              ))}
-            </tbody>
+              ))
+            )}
+          </tbody>
           </table>
         </TableScrollWrapper>
 

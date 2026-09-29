@@ -223,8 +223,21 @@ export function TerminView() {
               </tr>
             </thead>
             <tbody>
-              {filteredTermins.map((t) => (
-                <tr key={t.id}>
+              {filteredTermins.length === 0 ? (
+                <tr>
+                  <td colSpan={9} className="px-6 py-12 text-center">
+                    <div className="flex flex-col items-center justify-center">
+                      <CreditCard className="w-10 h-10 text-[#94A3B8] mb-2" />
+                      <p className="text-sm font-semibold text-[#1C2434]">Belum Ada Tagihan Termin</p>
+                      <p className="text-xs text-[#64748B] mt-1 max-w-sm">
+                        Jadwal penagihan termin faktur akan otomatis dibuat dan dipantau saat proyek baru didaftarkan.
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filteredTermins.map((t) => (
+                  <tr key={t.id}>
                   <td className="font-bold text-[#1C2434]">{t.terminName}</td>
                   <td className="font-mono text-[#3C50E0] font-bold text-xs">{t.invoiceNumber}</td>
                   <td>
@@ -281,15 +294,16 @@ export function TerminView() {
                     </div>
                   </td>
                 </tr>
-              ))}
-            </tbody>
+              ))
+            )}
+          </tbody>
           </table>
         </TableScrollWrapper>
 
         <div className="px-4 sm:px-6 py-3 border-t border-[#E2E8F0] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs text-[#64748B]">
           <span>Penagihan termin secara otomatis menerbitkan kuitansi tanda terima resmi</span>
           <span className="text-[#10B981] font-semibold flex items-center gap-1">
-            <CheckCircle2 className="w-3.5 h-3.5" /> Rekening Escrow Terkoneksi
+            <CheckCircle2 className="w-3.5 h-3.5" /> Administrasi Termin Terstandarisasi
           </span>
         </div>
       </div>

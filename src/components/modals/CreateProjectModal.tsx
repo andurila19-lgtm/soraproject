@@ -9,12 +9,13 @@ export function CreateProjectModal() {
   const { isCreateProjectOpen, setIsCreateProjectOpen, addProject, partners } = useProject();
 
   const [name, setName] = useState('');
-  const [partnerId, setPartnerId] = useState(partners[0]?.id || '');
+  const [partnerId, setPartnerId] = useState(partners[0]?.id || 'custom');
+  const [customPartnerName, setCustomPartnerName] = useState('');
   const [endUser, setEndUser] = useState('');
   const [projectType, setProjectType] = useState<Project['projectType']>('Kantor B2B');
   const [location, setLocation] = useState('');
-  const [contractValue, setContractValue] = useState<number>(1000000000);
-  const [hppBudget, setHppBudget] = useState<number>(700000000);
+  const [contractValue, setContractValue] = useState<number>(0);
+  const [hppBudget, setHppBudget] = useState<number>(0);
   const [targetMargin, setTargetMargin] = useState<number>(30);
   const [picProduksi, setPicProduksi] = useState('Budi Santoso (Kepala Produksi)');
   const [picLapangan, setPicLapangan] = useState('Rian Pratama (Site Supervisor)');
@@ -26,15 +27,16 @@ export function CreateProjectModal() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !partnerId) return;
+    if (!name) return;
 
     const partner = partners.find(p => p.id === partnerId);
-    const partnerName = partner ? partner.name : 'Partner B2B';
+    const resolvedPartnerName = partner ? partner.name : (customPartnerName.trim() || 'Klien Langsung');
+    const resolvedPartnerId = partner ? partner.id : `pt-${Date.now()}`;
 
     addProject({
       name,
-      partnerId,
-      partnerName,
+      partnerId: resolvedPartnerId,
+      partnerName: resolvedPartnerName,
       endUser: endUser || name,
       projectType,
       location: location || 'Jakarta, Indonesia',
@@ -100,15 +102,39 @@ export function CreateProjectModal() {
 
             <div>
               <label className="block text-[#1C2434] font-semibold mb-1">Partner / Klien Utama</label>
-              <select
-                value={partnerId}
-                onChange={(e) => setPartnerId(e.target.value)}
-                className="tail-input min-h-[38px]"
-              >
-                {partners.map((p) => (
-                  <option key={p.id} value={p.id}>{p.name} ({p.type})</option>
-                ))}
-              </select>
+              {partners.length === 0 ? (
+                <input
+                  type="text"
+                  required
+                  placeholder="Nama Klien atau Partner Arsitek..."
+                  value={customPartnerName}
+                  onChange={(e) => setCustomPartnerName(e.target.value)}
+                  className="tail-input min-h-[38px]"
+                />
+              ) : (
+                <div className="space-y-1.5">
+                  <select
+                    value={partnerId}
+                    onChange={(e) => setPartnerId(e.target.value)}
+                    className="tail-input min-h-[38px]"
+                  >
+                    {partners.map((p) => (
+                      <option key={p.id} value={p.id}>{p.name} ({p.type})</option>
+                    ))}
+                    <option value="custom">+ Input Nama Klien Baru</option>
+                  </select>
+                  {partnerId === 'custom' && (
+                    <input
+                      type="text"
+                      required
+                      placeholder="Ketik nama klien baru..."
+                      value={customPartnerName}
+                      onChange={(e) => setCustomPartnerName(e.target.value)}
+                      className="tail-input min-h-[38px]"
+                    />
+                  )}
+                </div>
+              )}
             </div>
 
             <div>

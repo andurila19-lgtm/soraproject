@@ -172,7 +172,26 @@ export function PartnerView() {
               </tr>
             </thead>
             <tbody>
-              {filteredPartners.map((partner) => {
+              {filteredPartners.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-6 py-12 text-center">
+                    <div className="flex flex-col items-center justify-center">
+                      <Building2 className="w-10 h-10 text-[#94A3B8] mb-2" />
+                      <p className="text-sm font-semibold text-[#1C2434]">Belum Ada Partner atau Klien Terdaftar</p>
+                      <p className="text-xs text-[#64748B] mt-1 max-w-sm">
+                        Sistem dalam keadaan bersih (0 partner). Daftarkan rekanan konsultan arsitek, holding F&B, atau developer klien Anda.
+                      </p>
+                      <button
+                        onClick={() => setIsAddPartnerOpen(true)}
+                        className="mt-3.5 btn-tail-primary text-xs py-2 px-3.5"
+                      >
+                        + Tambah Partner Baru
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filteredPartners.map((partner) => {
                 const partnerProjects = projects.filter(p => p.partnerId === partner.id);
                 return (
                   <tr key={partner.id}>
@@ -228,15 +247,16 @@ export function PartnerView() {
                     </td>
                   </tr>
                 );
-              })}
-            </tbody>
+              })
+            )}
+          </tbody>
           </table>
         </TableScrollWrapper>
 
         <div className="px-4 sm:px-6 py-3 border-t border-[#E2E8F0] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs text-[#64748B]">
           <span>Menampilkan seluruh rekanan terverifikasi</span>
           <span className="text-[#10B981] font-semibold flex items-center gap-1">
-            <CheckCircle2 className="w-3.5 h-3.5" /> Database Sora B2B
+            <CheckCircle2 className="w-3.5 h-3.5" /> Direktori Rekanan B2B Terverifikasi
           </span>
         </div>
       </div>
